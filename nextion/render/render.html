@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Nextion UI render — DETEKTOR AIR</title>
+<style>
+  :root{
+    --green:#58ffa1;
+    --green-bright:#d9ffe9;
+    --dim:#1e7a4c;
+    --amber:#ffc857;
+    --bg:#020906;
+    --mono:"Cascadia Mono","JetBrains Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+    --sans:"Segoe UI","Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#010604;color:var(--green-bright);font-family:var(--sans)}
+  body{overflow:hidden}
+
+  /* ---------------- single screen (960x720 = 3x) ---------------- */
+  #single{display:none}
+  body.single-view{background:#020906}
+  body.single-view #preview{display:none}
+  body.single-view #single{display:block}
+  .screen-wrap{
+    position:relative;overflow:hidden;
+    width:calc(320px * var(--scale));
+    height:calc(240px * var(--scale));
+    background:#000;
+  }
+  .screen{
+    position:absolute;left:0;top:0;
+    width:320px;height:240px;
+    overflow:hidden;
+    transform:scale(var(--scale));
+    transform-origin:top left;
+    background:var(--bg);
+    font-family:var(--mono);
+    color:var(--green);
+  }
+  /* CRT grids / scanlines */
+  .top-grid{
+    position:absolute;left:0;top:0;width:320px;height:84px;
+    background-image:
+      linear-gradient(rgba(88,255,161,.055) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(88,255,161,.055) 1px,transparent 1px);
+    background-size:14px 14px;
+    -webkit-mask-image:linear-gradient(to bottom,#000 20%,transparent 100%);
+            mask-image:linear-gradient(to bottom,#000 20%,transparent 100%);
+    z-index:1;pointer-events:none;
+  }
+  .top-grid.full{height:240px;opacity:.7}
+  .scan{
+    position:absolute;inset:0;z-index:6;pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.26) 0 1px,transparent 1px 3px);
+    opacity:.38;
+  }
+  .screen::after{
+    content:"";position:absolute;inset:0;z-index:5;pointer-events:none;
+    box-shadow:inset 0 0 26px rgba(0,0,0,.85),inset 0 0 5px rgba(88,255,161,.08);
+  }
+
+  /* ---------------- page 0: radar ---------------- */
+  .title{
+    position:absolute;left:8px;top:4px;z-index:3;
+    width:220px;height:22px;
+    font-size:12px;font-weight:700;letter-spacing:.11em;line-height:22px;
+    color:var(--green-bright);
+    text-shadow:0 0 8px rgba(88,255,161,.45);
+    white-space:nowrap;
+  }
+  .title span{color:var(--green)}
+  .nx-btn{
+    position:absolute;z-index:3;
+    display:flex;align-items:center;justify-content:center;
+    height:24px;width:54px;
+    border:1px solid rgba(88,255,161,.46);
+    border-radius:3px;
+    background:rgba(88,255,161,.055);
+    box-shadow:inset 0 0 10px rgba(88,255,161,.07);
+    font-size:8px;letter-spacing:.14em;color:var(--green);
+    text-shadow:0 0 5px rgba(88,255,161,.55);
+  }
+  .btn-info{left:258px;top:4px}
+  .btn-back{left:258px;top:4px}
+  .labels{position:absolute;inset:0;z-index:3;pointer-events:none}
+  .lab{
+    position:absolute;top:30px;width:90px;height:12px;
+    font-size:7px;letter-spacing:.13em;color:rgba(185,255,214,.45);
+    line-height:12px;text-align:center;
+  }
+  .lab.dist{left:8px}
+  .lab.angle{left:116px}
+  .lab.near{left:224px;width:88px}
+  .nums{position:absolute;inset:0;z-index:3;pointer-events:none}
+  .num{
+    position:absolute;top:38px;width:90px;height:28px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;font-weight:700;line-height:1;
+    color:var(--green-bright);
+    text-shadow:0 0 10px rgba(88,255,161,.5);
+  }
+  .num.dist{left:8px}
+  .num.angle{left:116px}
+  .num.near{left:224px;width:88px}
+  .alert{
+    position:absolute;left:8px;top:66px;z-index:3;
+    width:304px;height:16px;
+    font-size:8px;letter-spacing:.12em;line-height:16px;
+    color:var(--amber);
+    text-shadow:0 0 7px rgba(255,200,87,.55);
+    white-space:nowrap;
+  }
+  .alert.clear{color:var(--green);text-shadow:0 0 7px rgba(88,255,161,.4)}
+  .radar{position:absolute;inset:0;z-index:2;width:320px;height:240px}
+  .ring{fill:none;stroke:#1e7a4c;stroke-width:1;opacity:.62}
+  .ring.outer{stroke:#58ffa1;opacity:.45}
+  .axis{stroke:#1e7a4c;stroke-width:1;opacity:.42}
+  .tick{stroke:#1e7a4c;stroke-width:1;opacity:.7}
+  .sweep{stroke:#58ffa1;stroke-width:1.6;opacity:.95}
+  .center{fill:#d9ffe9}
+  .blip{fill:#58ffa1;filter:url(#glowSoft)}
+  .blip.dim{fill:#1e7a4c;opacity:.8}
+  .blip.water{fill:#ffc857;filter:url(#glowAmber)}
+
+  /* ---------------- page 1: info ---------------- */
+  .info-title{position:absolute;left:8px;top:4px;z-index:3;width:220px;height:22px;
+    font-size:12px;font-weight:700;letter-spacing:.10em;line-height:22px;color:var(--green-bright);
+    text-shadow:0 0 8px rgba(88,255,161,.45);white-space:nowrap}
+  .info-title span{color:var(--green)}
+  .rows{position:absolute;left:0;top:0;width:320px;height:150px;z-index:3}
+  .row{position:absolute;left:10px;right:10px;height:16px}
+  .row .k{position:absolute;left:0;top:2px;font-size:7px;letter-spacing:.12em;color:rgba(185,255,214,.42)}
+  .row .v{position:absolute;left:98px;top:1px;font-size:8px;letter-spacing:.04em;color:var(--green-bright)}
+  .sep{position:absolute;left:10px;right:10px;height:1px;background:rgba(88,255,161,.10)}
+  .btn-row{position:absolute;left:0;top:160px;width:320px;height:28px;z-index:3}
+  .ctrl{
+    position:absolute;top:0;width:70px;height:28px;
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid rgba(88,255,161,.35);border-radius:3px;
+    background:rgba(88,255,161,.04);
+    font-size:9px;letter-spacing:.12em;color:var(--green);
+    text-shadow:0 0 5px rgba(88,255,161,.4);
+  }
+  .ctrl.active{border-color:rgba(88,255,161,.8);background:rgba(88,255,161,.12);color:var(--green-bright)}
+  .c1{left:8px}.c2{left:86px}.c3{left:164px}.c4{left:242px}
+  .range{position:absolute;left:8px;top:196px;width:304px;height:16px;z-index:3;
+    font-size:8px;letter-spacing:.12em;color:var(--green);text-align:center;line-height:16px}
+  .note{position:absolute;left:8px;top:218px;width:304px;height:16px;z-index:3;
+    font-size:7px;letter-spacing:.08em;color:rgba(185,255,214,.32);text-align:center;line-height:16px}
+
+  /* ---------------- preview ---------------- */
+  #preview{
+    min-height:100vh;padding:30px 20px 22px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+    background:
+      radial-gradient(ellipse at 50% 20%,rgba(12,72,38,.30),transparent 58%),
+      linear-gradient(180deg,#020a06,#010604 70%);
+    position:relative;
+  }
+  #preview::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:
+      linear-gradient(rgba(88,255,161,.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(88,255,161,.04) 1px,transparent 1px);
+    background-size:44px 44px;
+    -webkit-mask-image:radial-gradient(ellipse at center,#000 15%,transparent 75%);
+            mask-image:radial-gradient(ellipse at center,#000 15%,transparent 75%);
+  }
+  .pre-head{position:relative;z-index:1;text-align:center}
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.34em;color:rgba(88,255,161,.48);margin-bottom:8px}
+  .pre-head h1{font-family:var(--sans);font-size:30px;letter-spacing:.16em;font-weight:800;color:#eafff2;line-height:1.1}
+  .pre-head h1 span{color:var(--green)}
+  .pre-head p{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:rgba(185,255,214,.4);margin-top:7px}
+  .devices{position:relative;z-index:1;display:flex;align-items:flex-start;gap:34px}
+  .device{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .dev-label{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:rgba(185,255,214,.5)}
+  .bezel{
+    padding:16px;border-radius:20px;
+    background:linear-gradient(150deg,#232629,#0a0c0c 45%,#050606);
+    border:1px solid #2c302e;
+    box-shadow:0 26px 60px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.07),inset 0 -2px 8px rgba(0,0,0,.8);
+    position:relative;
+  }
+  .bezel::after{
+    content:"";position:absolute;inset:7px;border-radius:13px;pointer-events:none;
+    border:1px solid rgba(0,0,0,.6);
+    box-shadow:inset 0 0 18px rgba(0,0,0,.85);
+  }
+  .bezel .screen-wrap{border-radius:4px;box-shadow:0 0 0 1px #000,0 0 34px rgba(88,255,161,.06)}
+  .dev-model{font-family:var(--mono);font-size:8px;letter-spacing:.16em;color:rgba(185,255,214,.26)}
+  .pre-foot{position:relative;z-index:1;font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:rgba(185,255,214,.30);text-align:center;line-height:1.7}
+  .pre-foot b{color:rgba(88,255,161,.55);font-weight:400}
+  .led{
+    position:absolute;right:30px;bottom:24px;width:3px;height:3px;border-radius:50%;
+    background:rgba(88,255,161,.55);box-shadow:0 0 6px rgba(88,255,161,.7);
+  }
+</style>
+</head>
+<body>
+  <div id="single">
+    <div class="screen-wrap" style="--scale:3">
+      <div class="screen" id="single-screen" data-page="radar"></div>
+    </div>
+  </div>
+
+  <div id="preview">
+    <div class="pre-head">
+      <div class="eyebrow">NEXTION UI · PREVIEW RENDER</div>
+      <h1>DETEKTOR <span>AIR</span></h1>
+      <p>NX3224T028 · 320×240 · UART2 · 115200</p>
+    </div>
+
+    <div class="devices">
+      <div class="device">
+        <div class="dev-label">PAGE 0 · RADAR</div>
+        <div class="bezel">
+          <div class="screen-wrap" style="--scale:2">
+            <div class="screen" data-page="radar"></div>
+          </div>
+          <span class="led"></span>
+        </div>
+        <div class="dev-model">PPI · 180° · 5 FPS</div>
+      </div>
+
+      <div class="device">
+        <div class="dev-label">PAGE 1 · INFO / KONTROL</div>
+        <div class="bezel">
+          <div class="screen-wrap" style="--scale:2">
+            <div class="screen" data-page="info"></div>
+          </div>
+          <span class="led"></span>
+        </div>
+        <div class="dev-model">JARINGAN · RANGE · PAUSE</div>
+      </div>
+    </div>
+
+    <div class="pre-foot">
+      Visual preview, not a screenshot of a flashed display.<br/>
+      Build the actual HMI in <b>Nextion Editor</b> using <b>nextion/README.md</b>.
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var params = new URLSearchParams(location.search);
+  var view = params.get("view") || "preview";
+
+  function radarMarkup(){
+    var cx = 160, cy = 164, R = 74;
+    var rings = "";
+    for (var i = 1; i <= 4; i++){
+      var r = R * i / 4;
+      rings += '<circle class="ring' + (i === 4 ? ' outer' : '') + '" cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>';
+    }
+
+    var ticks = "";
+    for (var a = 0; a <= 180; a += 30){
+      var rad = (180 + a) * Math.PI / 180;
+      var x1 = cx + Math.cos(rad) * R;
+      var y1 = cy + Math.sin(rad) * R;
+      var x2 = cx + Math.cos(rad) * (R - 6);
+      var y2 = cy + Math.sin(rad) * (R - 6);
+      ticks += '<line class="tick" x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '"/>';
+    }
+
+    var blips = [
+      { a: 28, d: 74 },
+      { a: 62, d: 176 },
+      { a: 95, d: 35, water: true },
+      { a: 123, d: 98 },
+      { a: 152, d: 129 },
+      { a: 48, d: 140, dim: true }
+    ];
+    var blipSvg = "";
+    blips.forEach(function(b){
+      var r = Math.min(1, b.d / 200) * R;
+      var rad = (180 + b.a) * Math.PI / 180;
+      var x = cx + Math.cos(rad) * r;
+      var y = cy + Math.sin(rad) * r;
+      var cls = "blip" + (b.water ? " water" : (b.dim ? " dim" : ""));
+      blipSvg += '<circle class="' + cls + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (b.water ? 2.6 : 2.1) + '"/>';
+    });
+
+    var srad = (180 + 118) * Math.PI / 180;
+    var sx = cx + Math.cos(srad) * R;
+    var sy = cy + Math.sin(srad) * R;
+
+    return '' +
+      '<div class="top-grid"></div>' +
+      '<div class="title">DETEKTOR <span>AIR</span></div>' +
+      '<div class="nx-btn btn-info">INFO</div>' +
+      '<div class="labels">' +
+        '<div class="lab dist">DIST</div>' +
+        '<div class="lab angle">ANGLE</div>' +
+        '<div class="lab near">NEAR</div>' +
+      '</div>' +
+      '<div class="nums">' +
+        '<div class="num dist">35</div>' +
+        '<div class="num angle">118</div>' +
+        '<div class="num near">35</div>' +
+      '</div>' +
+      '<div class="alert">AIR TERDETEKSI</div>' +
+      '<svg class="radar" viewBox="0 0 320 240" width="320" height="240" aria-hidden="true">' +
+        '<defs>' +
+          '<radialGradient id="radarBg" cx="50%" cy="47%" r="62%">' +
+            '<stop offset="0%" stop-color="#0a2616"/>' +
+            '<stop offset="62%" stop-color="#04140b"/>' +
+            '<stop offset="100%" stop-color="#010604"/>' +
+          '</radialGradient>' +
+          '<filter id="glowSoft" x="-200%" y="-200%" width="500%" height="500%">' +
+            '<feGaussianBlur stdDeviation="1.1" result="b"/>' +
+            '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+          '</filter>' +
+          '<filter id="glowAmber" x="-200%" y="-200%" width="500%" height="500%">' +
+            '<feGaussianBlur stdDeviation="1.5" result="b"/>' +
+            '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+          '</filter>' +
+          '<filter id="glowLine" x="-50%" y="-50%" width="200%" height="200%">' +
+            '<feGaussianBlur stdDeviation="1.4" result="b"/>' +
+            '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+          '</filter>' +
+        '</defs>' +
+        '<rect x="0" y="84" width="320" height="156" fill="url(#radarBg)"/>' +
+        '<g>' + rings + '</g>' +
+        '<line class="axis" x1="' + (cx - R) + '" y1="' + cy + '" x2="' + (cx + R) + '" y2="' + cy + '"/>' +
+        '<line class="axis" x1="' + cx + '" y1="' + (cy - R) + '" x2="' + cx + '" y2="' + (cy + R) + '"/>' +
+        '<g>' + ticks + '</g>' +
+        '<g>' + blipSvg + '</g>' +
+        '<line class="sweep" x1="' + cx + '" y1="' + cy + '" x2="' + sx.toFixed(1) + '" y2="' + sy.toFixed(1) + '" filter="url(#glowLine)"/>' +
+        '<circle class="center" cx="' + cx + '" cy="' + cy + '" r="2"/>' +
+      '</svg>' +
+      '<div class="scan"></div>';
+  }
+
+  function infoMarkup(){
+    var rows = [
+      ["MODE", "AP+STA"],
+      ["AP IP", "192.168.4.1"],
+      ["STA IP", "192.168.1.77"],
+      ["SIGNAL", "-57 dBm"],
+      ["UPTIME", "00:20:34"],
+      ["FIRMWARE", "1.1.0"]
+    ];
+    var rowsHtml = "";
+    rows.forEach(function(row, i){
+      var y = 30 + i * 19;
+      rowsHtml +=
+        '<div class="row" style="top:' + y + 'px">' +
+          '<span class="k">' + row[0] + '</span>' +
+          '<span class="v">' + row[1] + '</span>' +
+        '</div>' +
+        '<div class="sep" style="top:' + (y + 15) + 'px"></div>';
+    });
+
+    return '' +
+      '<div class="top-grid full"></div>' +
+      '<div class="info-title">INFO / <span>KONTROL</span></div>' +
+      '<div class="nx-btn btn-back">BACK</div>' +
+      '<div class="rows">' + rowsHtml + '</div>' +
+      '<div class="btn-row">' +
+        '<div class="ctrl c1">100</div>' +
+        '<div class="ctrl c2">200</div>' +
+        '<div class="ctrl c3">300</div>' +
+        '<div class="ctrl c4">JEDA</div>' +
+      '</div>' +
+      '<div class="range">RANGE: 200 cm</div>' +
+      '<div class="note">Nextion + web UI aktif</div>' +
+      '<div class="scan"></div>';
+  }
+
+  if (view === "radar" || view === "info"){
+    document.body.classList.add("single-view");
+    var single = document.getElementById("single-screen");
+    single.setAttribute("data-page", view);
+    single.innerHTML = view === "radar" ? radarMarkup() : infoMarkup();
+  } else {
+    var screens = document.querySelectorAll(".screen");
+    for (var i = 0; i < screens.length; i++){
+      var page = screens[i].getAttribute("data-page");
+      screens[i].innerHTML = page === "radar" ? radarMarkup() : infoMarkup();
+    }
+  }
+})();
+</script>
+</body>
+</html>

@@ -4,11 +4,18 @@ Adds a local touch display to the DETEKTOR AIR radar **without removing the web
 UI**. The ESP32 keeps serving the web app (Config/OTA/radar) and also draws a
 simplified radar + info/control pages on the Nextion over UART2.
 
-![Radar page](layout-radar.png)
-![Info page](layout-info.png)
+<p align="center">
+  <img src="layout-radar.png" width="420" alt="Radar page render"/>
+  <img src="layout-info.png" width="420" alt="Info page render"/>
+</p>
 
-These two images are **layout mockups**, not screenshots of a finished HMI.
-Build the actual pages in **Nextion Editor** using the tables below.
+These are **preview renders**, not screenshots of a flashed display. The
+combined device view is [`render/preview.png`](render/preview.png), and the
+HTML renderer is [`render/render.html`](render/render.html).
+
+Build the actual pages in **Nextion Editor** using the tables below. The
+rendered look uses glow/scanlines for presentation; the real HMI should use
+flat colours and simple Nextion fonts.
 
 ---
 
