@@ -1,0 +1,8 @@
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Arduino / editors
+.vscode/
+*.tmp
