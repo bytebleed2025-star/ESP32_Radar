@@ -59,6 +59,10 @@
 
 #include "web_assets.h"
 
+// Set to 0 if you do not have the Nextion display attached.
+#define NEXTION_ENABLED 1
+#include "nextion_ui.h"
+
 /* --------------------------------------------------------------------------
  *  VERSION
  * ------------------------------------------------------------------------ */
@@ -334,6 +338,8 @@ static void sendConfig(uint8_t num) {
                    maxRangeCm, (unsigned)stepDeg, g_paused ? 1u : 0u);
   if (num == 255) webSocket.broadcastTXT(buf, n);
   else            webSocket.sendTXT(num, buf, n);
+
+  NextionUI::setConfig(maxRangeCm, g_paused);
 }
 
 static void sendStatus() {
@@ -353,6 +359,22 @@ static void sendStatus() {
                    (unsigned long)ESP.getFreeHeap(),
                    FW_VERSION, g_otaActive ? 1 : 0);
   webSocket.broadcastTXT(buf, n);
+
+  NextionUI::setNetwork(networkMode(), apip.c_str(), staip.c_str(),
+                        sta ? WiFi.RSSI() : 0,
+                        (unsigned long)(millis() / 1000UL), FW_VERSION);
+}
+
+// Nextion page 1 buttons: keep the local UI and the web UI in sync.
+static void onNextionRange(int cm) {
+  maxRangeCm = constrain(cm, 40, 400);
+  sendConfig(255);
+}
+
+static void onNextionPause() {
+  g_paused = !g_paused;
+  servo.write(servoPosFor(g_angle));
+  sendConfig(255);
 }
 
 static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length) {
@@ -694,6 +716,8 @@ static void takeStep() {
   float cm = pingCm();
   if (cm > 0.0f) distance = (int)(cm + 0.5f);
 
+  NextionUI::addReading(g_angle, distance);
+
   char buf[80];
   int n = snprintf(buf, sizeof(buf), "{\"a\":%d,\"d\":%d,\"mx\":%d}",
                    g_angle, distance, maxRangeCm);
@@ -775,6 +799,10 @@ void setup() {
   // ArduinoOTA (port 3232)
   startOta();
 
+  // Nextion display (UART2). It boots slower than the ESP32.
+  NextionUI::setCallbacks(onNextionRange, onNextionPause);
+  NextionUI::begin();
+
   Serial.println("------------------------------------------");
   Serial.println("AP+STA mode. HTTP :80, WebSocket :81");
   Serial.printf("AP  IP : %s\n", WiFi.softAPIP().toString().c_str());
@@ -794,6 +822,7 @@ void loop() {
   server.handleClient();
   webSocket.loop();
   ArduinoOTA.handle();
+  NextionUI::loop();
 
   if (g_rebootAt && (long)(millis() - g_rebootAt) >= 0) {
     Serial.println("Rebooting...");

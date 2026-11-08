@@ -29,6 +29,7 @@ backdrop and header logo (served as `web/logo.jpg`).
 - **CONFIG tab** — WiFi scan, STA/AP credentials, hostname and factory reset,
   saved in NVS and applied at boot
 - **OTA updates** — web upload from the Config tab and ArduinoOTA on port 3232
+- Optional **Nextion NX3224T028** local UI on UART2 (radar page + info/control page) while the web UI keeps running
 - Automatic browser reconnect, full-screen mode, optional sonar ping sound
 - Responsive layout for phone, tablet and desktop
 - `?demo=1` simulation mode — preview the UI with no hardware
@@ -41,7 +42,9 @@ backdrop and header logo (served as `web/logo.jpg`).
 ├─ platformio.ini              PlatformIO project (builds the same sketch)
 ├─ firmware/ESP32_Radar/
 │  ├─ ESP32_Radar.ino          ESP32 firmware (Arduino sketch)
+│  ├─ nextion_ui.h             Nextion UART2 driver + radar drawing
 │  └─ web_assets.h             auto-generated embedded UI
+├─ nextion/                    Nextion HMI layout guide + mockups
 ├─ web/
 │  ├─ index.html               editable radar UI (CSS + JS inline)
 │  └─ logo.jpg                 background/logo image
@@ -61,6 +64,7 @@ backdrop and header logo (served as `web/logo.jpg`).
 | 1 kΩ + 2 kΩ resistors | voltage divider for the HC-SR04 ECHO pin |
 | 470–1000 µF electrolytic capacitor | across the servo supply (avoids brownouts) |
 | Jumper wires, servo bracket | mount the sensor on the servo horn |
+| Nextion NX3224T028 (optional) | 2.8″ 320×240, UART2, 5 V — see [nextion/README.md](nextion/README.md) |
 
 ### Wiring
 
@@ -79,7 +83,18 @@ SG90
   red    (+) ─────── +5V external (1 A), 470 µF to GND
   brown  (−) ─────── GND (common with ESP32)
   orange (SIG) ───── GPIO 19
+
+Optional Nextion (UART2, 115200 baud):
+  Nextion 5V  ─────── 5V
+  Nextion GND ─────── GND (common)
+  Nextion TX  ──[1k/2k divider]── GPIO 16 (RX2)
+  Nextion RX  ─────── GPIO 17 (TX2)
 ```
+
+> **Nextion note:** its TX is 5 V — use a divider or level shifter into
+> GPIO16. GPIO16/17 are free on a WROOM module; a WROVER with PSRAM may reserve
+> them. The complete HMI layout, baud setting and touch-ID guide is in
+> [`nextion/README.md`](nextion/README.md).
 
 > **Important:** the HC-SR04 ECHO output is 5 V, but ESP32 GPIOs are **not
 > 5 V tolerant**. The 1 kΩ / 2 kΩ divider drops it to ~3.3 V. Do not connect
@@ -214,6 +229,21 @@ Readouts:
   dashed line is the water threshold.
 - **SENSOR / TAUTAN** — scan state, ping count, AP/STA mode, both IPs, RSSI,
   clients and free heap.
+
+### Nextion local display (optional)
+
+The optional NX3224T028 gives you a local 2.8″ touch panel. It runs at the same
+time as the web UI:
+
+- **Page 0 — RADAR**: distance, angle, nearest, alert, and a 5 FPS PPI sweep
+  with the latest contacts.
+- **Page 1 — INFO/KONTROL**: AP/STA IPs, RSSI, uptime, firmware, range buttons
+  (100/200/300 cm) and pause/continue. Changes are mirrored to the web UI.
+
+The full wiring, Nextion Editor component tables, touch IDs and troubleshooting
+are in [`nextion/README.md`](nextion/README.md). The firmware driver is
+`firmware/ESP32_Radar/nextion_ui.h`. Set `NEXTION_ENABLED 0` in the sketch if
+you do not use the display.
 
 ## CONFIG tab — network & OTA
 
@@ -384,6 +414,7 @@ booting, move TRIG away from GPIO 5 (a strapping pin) to GPIO 4, and update the
 | UI changes don't appear | Run `python tools/build_assets.py`, re-upload, then hard-refresh the browser (Ctrl+F5). |
 | Compile: program storage overflow | Use a 4 MB module with an OTA partition. The OTA layout gives 1.9 MB per app slot. |
 | Page slow to load | Normal on first load (UI + logo are served from flash); it is cached by the browser afterwards. |
+| Nextion blank / no touch / wrong buttons | See the dedicated troubleshooting table in [`nextion/README.md`](nextion/README.md) (baud 115200, “Send Component ID”, TX/RX divider, component IDs). |
 
 ## Notes about ultrasonic sensing
 
@@ -400,13 +431,14 @@ booting, move TRIG away from GPIO 5 (a strapping pin) to GPIO 4, and update the
 
 - **Arduino IDE / arduino-cli** — ESP32 core **3.3.12**, ESP32Servo **3.2.1**,
   WebSockets **2.7.2**, partition scheme `min_spiffs` (1.9 MB OTA slot):
-  **1,138,846 bytes (57%) flash**, **53,808 bytes (16%) RAM**
+  **1,150,042 bytes (58%) flash**, **55,064 bytes (16%) RAM**
 - **PlatformIO Core 6.2.0** — `espressif32@7.0.1` (Arduino core 2.0.17),
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
-  **975,153 bytes (49.6%) flash**, **51,176 bytes (15.6%) RAM**
+  **986,157 bytes (50.2%) flash**, **52,432 bytes (16.0%) RAM**
 - UI/API integration in Chromium against a mock HTTP + WebSocket device:
   network scan, config save, OTA upload, reboot overlay and tab switching.
-  The radio/servo/OTA behaviour itself still needs a test on the real board.
+  The radio/servo/OTA behaviour and the Nextion UART/touch/drawing still need a
+  test on the real hardware.
 - Chromium-based browsers (desktop + mobile layout)
 
 ## License
