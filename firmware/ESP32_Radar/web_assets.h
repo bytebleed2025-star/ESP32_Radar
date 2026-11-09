@@ -4,7 +4,7 @@
 #pragma once
 #include <pgmspace.h>
 
-static const unsigned int INDEX_HTML_LEN = 76683;
+static const unsigned int INDEX_HTML_LEN = 79037;
 static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 <!DOCTYPE html>
 <html lang="id">
@@ -213,6 +213,20 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     box-shadow:0 0 14px rgba(88,255,161,.12);
   }
   .hand-hint{ font-size:8px; line-height:1.5; color:rgba(185,255,214,.35); letter-spacing:.03em; }
+  .hold-btn{
+    height:42px; flex:0 0 100%;
+    border-color:rgba(255,200,87,.45);
+    background:rgba(255,200,87,.08);
+    color:var(--amber);
+    font-size:10px; letter-spacing:.16em;
+    touch-action:none; user-select:none; -webkit-user-select:none;
+  }
+  .hold-btn:hover{ background:rgba(255,200,87,.16); box-shadow:0 0 18px rgba(255,200,87,.16); }
+  .hold-btn.active{
+    background:rgba(255,200,87,.24);
+    box-shadow:0 0 22px rgba(255,200,87,.25);
+    color:#fff3d6;
+  }
 
   /* ---------- telemetry ---------- */
   .stats .metric{ display:flex; flex-direction:column; gap:4px; }
@@ -640,13 +654,15 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
         <label class="slider" id="angle-wrap" hidden>
           <div class="slider-top"><span>SUDUT MANUAL <small>ANGLE</small></span><b><span id="angle-val">90</span>°</b></div>
           <input id="angle" type="range" min="0" max="180" step="1" value="90"/>
-          <div class="hand-hint">HAND: geser sudut atau pakai tombol jog.</div>
+          <div class="hand-hint">HAND: tahan tombol GERAK untuk menyapu; lepas = stop. Slider/jog = posisi.</div>
         </label>
 
         <div class="btn-row" id="jog-row" hidden>
           <button class="btn ghost" id="jog-left">◀ 5°</button>
           <button class="btn ghost" id="jog-right">5° ▶</button>
         </div>
+
+        <button class="btn hold-btn" id="hand-move" hidden>TAHAN = GERAK</button>
 
         <label class="slider">
           <div class="slider-top"><span>JANGKAUAN <small>RANGE</small></span><b><span id="range-val">200</span> cm</b></div>
@@ -827,6 +843,8 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     step: 2,
     paused: false,
     hand: false,
+    holding: false,
+    holdBeat: null,
     manual: 90,
     buzzer: true,
     servoAngle: 0,
@@ -1381,22 +1399,25 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
   }
   function updatePauseUI(){
     var b = $("pause"), l = $("pause-label");
+    var hm = $("hand-move");
     var st = $("scan-state");
     if (S.hand){
-      if (S.paused){ b.classList.add("active"); l.textContent = "MULAI"; }
-      else { b.classList.remove("active"); l.textContent = "STOP"; }
-      if (st) st.textContent = S.paused ? "SERVO STOP" : "MANUAL";
+      if (hm) hm.classList.toggle("active", S.holding);
+      if (st) st.textContent = S.holding ? "GERAK MANUAL" :
+                               (S.paused ? "SIAP" : "POSISI");
     } else {
-      if (S.paused){ b.classList.add("active"); l.textContent = "LANJUT"; }
-      else { b.classList.remove("active"); l.textContent = "JEDA"; }
       if (st) st.textContent = S.paused ? "DIJEDA" : "MENYAPU";
     }
+    if (S.paused){ b.classList.add("active"); l.textContent = "LANJUT"; }
+    else { b.classList.remove("active"); l.textContent = "JEDA"; }
   }
   function updateModeUI(){
     $("mode-auto").classList.toggle("active", !S.hand);
     $("mode-hand").classList.toggle("active", S.hand);
     $("angle-wrap").hidden = !S.hand;
     $("jog-row").hidden = !S.hand;
+    $("hand-move").hidden = !S.hand;
+    $("pause").hidden = S.hand;
     syncManualUI();
     updatePauseUI();
     updateNote();
@@ -1421,6 +1442,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       if (typeof m.bz === "number") S.buzzer = !!m.bz;
       if (typeof m.thr === "number") S.threshold = clamp(m.thr, 10, 150);
       S.paused = !!m.p;
+      if (S.paused) cancelHandHold(false);
       syncRangeUI(); syncSpeedUI(); syncThresholdUI(); syncManualUI();
       updateModeUI(); updateBuzzerUI();
       return;
@@ -1480,6 +1502,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     ws.onclose = function(){
       S.connected = false;
       S.ws = null;
+      cancelHandHold(false);
       setLink("bad");
       showOffline(true, S.everConnected ? "SINYAL TERPUTUS" : "MENGHUBUNGKAN…");
       scheduleReconnect();
@@ -1938,6 +1961,35 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
   }
 
   /* ---------- controls ---------- */
+  function cancelHandHold(sendStop){
+    if (S.holdBeat){ clearInterval(S.holdBeat); S.holdBeat = null; }
+    S.holding = false;
+    if (sendStop) send("P1");
+    updatePauseUI();
+  }
+
+  function startHandHold(){
+    if (!S.hand || S.holding) return;
+    S.holding = true;
+    S.paused = false;
+    updatePauseUI();
+    send("P0");
+    if (S.holdBeat) clearInterval(S.holdBeat);
+    // Heartbeat: the firmware stops automatically if these stop arriving.
+    S.holdBeat = setInterval(function(){
+      if (S.holding) send("P0");
+    }, 250);
+  }
+
+  function stopHandHold(){
+    if (!S.holding) return;
+    S.holding = false;
+    S.paused = true;
+    if (S.holdBeat){ clearInterval(S.holdBeat); S.holdBeat = null; }
+    updatePauseUI();
+    send("P1");
+  }
+
   function bindUI(){
     var rangeEl = $("range");
     var thrEl = $("thr");
@@ -1979,6 +2031,9 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     angleEl.addEventListener("input", function(){
       var v = parseInt(angleEl.value, 10);
       S.manual = clamp(isNaN(v) ? S.manual : v, 0, 180);
+      cancelHandHold(false);
+      S.paused = false;
+      updatePauseUI();
       syncManualUI();
       clearTimeout(angleTimer);
       angleTimer = setTimeout(function(){ send("A" + S.manual); }, 60);
@@ -1986,13 +2041,39 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 
     function jog(delta){
       S.manual = clamp(S.manual + delta, 0, 180);
+      cancelHandHold(false);
+      S.paused = false;
+      updatePauseUI();
       syncManualUI();
       send("A" + S.manual);
     }
     $("jog-left").addEventListener("click", function(){ jog(-5); });
     $("jog-right").addEventListener("click", function(){ jog(5); });
 
+    var handMove = $("hand-move");
+    handMove.addEventListener("pointerdown", function(e){
+      e.preventDefault();
+      startHandHold();
+    });
+    handMove.addEventListener("pointerup", function(e){
+      e.preventDefault();
+      stopHandHold();
+    });
+    handMove.addEventListener("pointerleave", stopHandHold);
+    handMove.addEventListener("pointercancel", stopHandHold);
+    handMove.addEventListener("touchstart", function(e){
+      e.preventDefault();
+      startHandHold();
+    }, { passive: false });
+    handMove.addEventListener("touchend", function(e){
+      e.preventDefault();
+      stopHandHold();
+    }, { passive: false });
+    handMove.addEventListener("touchcancel", stopHandHold);
+    handMove.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
     $("mode-auto").addEventListener("click", function(){
+      cancelHandHold(false);
       S.hand = false;
       S.paused = false;
       updateModeUI();
@@ -2001,25 +2082,22 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     });
 
     $("mode-hand").addEventListener("click", function(){
+      cancelHandHold(false);
       S.hand = true;
-      S.paused = false;
+      S.paused = true;
       var current = (typeof S.servoAngle === "number" && isFinite(S.servoAngle))
         ? S.servoAngle : S.manual;
       S.manual = clamp(Math.round(current), 0, 180);
       updateModeUI();
       send("M1");
-      // Keep the firmware target equal to the slider after the mode switch.
-      setTimeout(function(){ send("A" + S.manual); }, 80);
-      toast("MODE HAND - GESER SUDUT MANUAL");
+      toast("MODE HAND - TAHAN TOMBOL GERAK");
     });
 
     $("pause").addEventListener("click", function(){
       S.paused = !S.paused;
       updatePauseUI();
       send("P" + (S.paused ? "1" : "0"));
-      toast(S.hand
-        ? (S.paused ? "SERVO STOP" : "SERVO MULAI")
-        : (S.paused ? "SAPUAN DIJEDA" : "SAPUAN DILANJUTKAN"));
+      toast(S.paused ? "SAPUAN DIJEDA" : "SAPUAN DILANJUTKAN");
     });
 
     $("buzzer").addEventListener("click", function(){
@@ -2049,7 +2127,8 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     });
 
     document.addEventListener("visibilitychange", function(){
-      if (!document.hidden) hudAt = 0;
+      if (document.hidden) cancelHandHold(true);
+      else hudAt = 0;
     });
   }
 

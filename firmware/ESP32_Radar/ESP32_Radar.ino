@@ -127,6 +127,8 @@ static bool g_apStarted      = false;
 static bool g_staWasConnected = false;
 static bool g_paused         = false;
 static bool g_handMode       = false;
+static bool g_handSweep      = false;
+static unsigned long g_handHoldUntil = 0;
 static int  g_manualTarget   = 90;
 static int  g_alertCm        = 50;
 static bool g_buzzerEnabled  = true;
@@ -431,28 +433,49 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
           sendConfig(255);
           break;
 
-        case 'P':                       // "P1" stop / "P0" start
-          g_paused = (atoi(msg + 1) != 0);
+        case 'P': {                     // "P1" stop / "P0" start/hold
+          bool paused = (atoi(msg + 1) != 0);
+          if (g_handMode) {
+            if (!paused) {
+              // Momentary HOLD: sweep while P0 heartbeats arrive.
+              g_handSweep = true;
+              g_handHoldUntil = millis() + 800UL;
+              g_lastHandPingMs = 0;
+            } else {
+              g_handSweep = false;
+            }
+          }
+          g_paused = paused;
           servo.write(servoPosFor(g_angle));
+          Serial.printf("[WS] %s paused=%d sweep=%d target=%d angle=%d\n",
+                        g_handMode ? "HAND" : "AUTO", g_paused ? 1 : 0,
+                        g_handSweep ? 1 : 0, g_manualTarget, g_angle);
           sendConfig(255);
           break;
+        }
 
         case 'M':                       // "M0" auto / "M1" hand
           g_handMode = (atoi(msg + 1) != 0);
-          g_paused = false;
+          g_handSweep = false;
+          g_handHoldUntil = 0;
+          g_paused = g_handMode;        // HAND starts stopped, AUTO runs
           g_lastHandPingMs = 0;
           if (g_handMode) {
             g_manualTarget = g_angle;
+            servo.write(servoPosFor(g_angle));
           } else {
             g_direction = 1;
           }
-          Serial.printf("[WS] mode=%s target=%d angle=%d\n",
-                        g_handMode ? "HAND" : "AUTO", g_manualTarget, g_angle);
+          Serial.printf("[WS] mode=%s target=%d angle=%d paused=%d\n",
+                        g_handMode ? "HAND" : "AUTO", g_manualTarget, g_angle,
+                        g_paused ? 1 : 0);
           sendConfig(255);
           break;
 
         case 'A':                       // "A120" manual target angle
           g_handMode = true;
+          g_handSweep = false;
+          g_handHoldUntil = 0;
           g_manualTarget = constrain(atoi(msg + 1), 0, 180);
           g_paused = false;
           Serial.printf("[WS] hand target=%d angle=%d paused=%d\n",
@@ -524,12 +547,12 @@ static void handleInfo() {
 static void handleDebug() {
   char body[192];
   snprintf(body, sizeof(body),
-           "{\"ok\":true,\"mode\":\"%s\",\"paused\":%d,\"angle\":%d,"
-           "\"target\":%d,\"step\":%u,\"alert\":%d,\"buzzer\":%d,"
-           "\"last_cm\":%d}",
-           g_handMode ? "HAND" : "AUTO", g_paused ? 1 : 0, g_angle,
-           g_manualTarget, (unsigned)stepDeg, g_alertCm,
-           g_buzzerEnabled ? 1 : 0, g_lastMeasurement);
+           "{\"ok\":true,\"mode\":\"%s\",\"paused\":%d,\"sweep\":%d,"
+           "\"angle\":%d,\"target\":%d,\"step\":%u,\"alert\":%d,"
+           "\"buzzer\":%d,\"last_cm\":%d}",
+           g_handMode ? "HAND" : "AUTO", g_paused ? 1 : 0,
+           g_handSweep ? 1 : 0, g_angle, g_manualTarget, (unsigned)stepDeg,
+           g_alertCm, g_buzzerEnabled ? 1 : 0, g_lastMeasurement);
   sendJson(200, body);
 }
 
@@ -831,6 +854,18 @@ static void measureAtCurrent() {
 
 static void takeStep() {
   if (g_handMode) {
+    if (g_handSweep) {
+      g_manualTarget = g_angle;
+      servo.write(servoPosFor(g_angle));
+      delay(STEP_SETTLE_MS);
+      measureAtCurrent();
+
+      g_angle += g_direction * (int)stepDeg;
+      if (g_angle > 180) { g_angle = 360 - g_angle; g_direction = -1; }
+      if (g_angle < 0)   { g_angle = -g_angle;     g_direction =  1; }
+      return;
+    }
+
     int target = constrain(g_manualTarget, 0, 180);
     int delta  = target - g_angle;
 
@@ -971,6 +1006,15 @@ void loop() {
   unsigned long now = millis();
 
   updateBuzzer(now);
+
+  // Momentary HAND control: stop if the browser stops sending P0 heartbeats.
+  if (g_handMode && g_handSweep &&
+      (int32_t)(now - g_handHoldUntil) >= 0) {
+    g_handSweep = false;
+    g_paused = true;
+    Serial.println("[WS] HAND hold timeout, servo stopped");
+    sendConfig(255);
+  }
 
   if (!g_otaActive && !g_paused && now - g_lastStepMs >= STEP_INTERVAL_MS) {
     g_lastStepMs = now;

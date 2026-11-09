@@ -403,11 +403,12 @@ The first run downloads the U2Net model (about 176 MB).
 The web UI has two servo modes:
 
 - **AUTO** — the servo sweeps 0–180° continuously. `JEDA` pauses/resumes.
-- **HAND** — the servo holds a manual angle; it does **not** sweep on its own.
-  Drag **SUDUT MANUAL** or use the **◀ 5° / 5° ▶** jog buttons to move it.
-  `STOP` / `MULAI` enables/disables the servo, and **KECEPATAN** sets how many
-  degrees it moves per step (1–5°). The current target is shown under
-  **SENSOR → TARGET**.
+- **HAND** — momentary manual control. **Press and hold `TAHAN = GERAK`** to
+  sweep the servo; **release to stop**. Drag **SUDUT MANUAL** or use the
+  **◀ 5° / 5° ▶** jog buttons to position it. **KECEPATAN** sets how many
+  degrees it moves per step (1–5°), and the current target is shown under
+  **SENSOR → TARGET**. A 0.8 s heartbeat stops the servo automatically if the
+  browser disconnects while the button is held.
 
 The **BUZZER** button enables/disables the local alarm on **GPIO 23**. It beeps
 when a measured contact is within the **AMBANG AIR** threshold (10–150 cm),
@@ -451,7 +452,7 @@ directly.
 | Page loads, LINK stays **TERPUTUS** | WebSocket port 81 blocked; phone on a different network/VLAN; router client isolation. Open `http://<ip>/` directly. |
 | Readings always 0 cm | ECHO divider/wiring, sensor on 5 V, TRIG/ECHO pins, object within range and roughly perpendicular. |
 | Servo jitters, ESP32 reboots or WiFi drops | Servo is drawing too much power. Use a separate 5 V supply + 470 µF capacitor + common ground. |
-| Hand mode does not move | HAND holds the angle; it does not sweep. Press `MULAI`, then drag **SUDUT MANUAL** or use the jog buttons. Check `GET /api/debug`: `target` should change to your slider angle. Serial should show `[WS] hand target=...`. |
+| Hand mode does not move | Press and **hold** `TAHAN = GERAK`; release to stop. Or drag **SUDUT MANUAL** / use jog to position. Check `GET /api/debug`: `sweep` should be `1` while held, and `target` should change with the slider. Serial shows `[WS] HAND ... sweep=...`. |
 | Buzzer never sounds | GPIO 23 wiring, active/passive setting (`BUZZER_ACTIVE`), `BUZZER: ON` in the web UI, and a contact inside **AMBANG AIR**. |
 | ESP32 boot loop | GPIO 5 strapping pin, power supply, or a short. Try TRIG on GPIO 4. |
 | WiFi (STA) never connects, hotspot still works | ESP32 supports only 2.4 GHz networks; check SSID/password in CONFIG. The AP remains available so you can fix it. |
@@ -484,10 +485,10 @@ directly.
 
 - **Arduino IDE / arduino-cli** — ESP32 core **3.3.12**, ESP32Servo **3.2.1**,
   WebSockets **2.7.2**, partition scheme `min_spiffs` (1.9 MB OTA slot):
-  **1,157,510 bytes (58%) flash**, **55,128 bytes (16%) RAM**
+  **1,160,238 bytes (59%) flash**, **55,136 bytes (16%) RAM**
 - **PlatformIO Core 6.2.0** — `espressif32@7.0.1` (Arduino core 2.0.17),
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
-  **993,561 bytes (50.5%) flash**, **52,504 bytes (16.0%) RAM**
+  **996,269 bytes (50.7%) flash**, **52,512 bytes (16.0%) RAM**
 - **Nextion** — nxwright 0.2.5 + Nextion Editor 1.68.2 firmware →
   `nextion/NX3224T028.tft` (**846,708 bytes**); page RAM 256 + 504 + 36 of 3584
   bytes
