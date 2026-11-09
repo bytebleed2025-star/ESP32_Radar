@@ -250,7 +250,7 @@ Nextion GND ────────────────────── G
 | Button | `bR300` | 164 | 160 | 70 | 28 | `300`, **ID 4** |
 | Button | `tPauseBtn` | 242 | 160 | 70 | 28 | `JEDA`, **ID 5** |
 | Text | `tRange` | 8 | 196 | 304 | 16 | `200 cm`, font 0, green, centered, `txt_maxl` 12 |
-| Text | `tNote` | 8 | 218 | 304 | 16 | `Nextion + web UI aktif`, font 0, dim, `txt_maxl` 32 |
+| Text | `tNote` | 8 | 218 | 304 | 16 | `ESP32 Dev by SHD`, font 0, dim, `txt_maxl` 32 |
 
 - The four buttons must have **Send Component ID** enabled on the **Touch
   Release Event**. Do not add a local `page` action; the ESP32 controls pages.

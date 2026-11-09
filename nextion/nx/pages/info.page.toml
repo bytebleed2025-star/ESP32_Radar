@@ -350,7 +350,7 @@ pco = "#6FAF8C"
 font = "Sans16"
 xcen = 1
 ycen = 1
-txt = "Nextion + web UI aktif"
+txt = "ESP32 Dev by SHD"
 txt_maxl = 32
 
 [[component]]
