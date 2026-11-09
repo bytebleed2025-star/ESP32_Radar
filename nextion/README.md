@@ -203,10 +203,10 @@ Nextion GND ────────────────────── G
 - **Do not put any component in x 0…319, y 84…239.** The firmware draws the
   radar there and the `fill` clears the area.
 - The three Number components are written as `nDist.val=...` etc.
-- `tAlert.pco` and `tAlert.txt` are updated when a contact enters the 50 cm
-  alert range.
-- The alert threshold is `NX_ALERT_CM` in `nextion_ui.h` (default 50 cm). It is
-  separate from the web UI's threshold slider.
+- `tAlert.pco` and `tAlert.txt` are updated when a contact enters the alert
+  range.
+- The alert threshold follows the web UI’s **AMBANG AIR** slider. Its default
+  comes from `NX_ALERT_CM` in `nextion_ui.h` (50 cm).
 
 ### 3.3 Page 1 — `info`
 
@@ -368,8 +368,8 @@ If you see values but no radar, check the radar area is empty in the HMI (the
 
 - The Nextion Basic is not a fast graphics display; the local radar is a
   simplified 5 FPS PPI, not the smooth 60 FPS web canvas.
-- The Nextion alert threshold is fixed at 50 cm (`NX_ALERT_CM`); the web UI has
-  its own adjustable threshold.
+- The Nextion alert threshold follows the web UI’s **AMBANG AIR** slider
+  (`NX_ALERT_CM` is only the default).
 - Only the last 12 contacts are drawn, over an ~8 s window.
 - The 2.8″ 320×240 layout above is tight; keep the component coordinates and
   avoid adding widgets inside the radar area.

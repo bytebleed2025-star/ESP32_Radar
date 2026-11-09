@@ -96,6 +96,7 @@ static uint8_t  g_page       = NX_PAGE_RADAR;
 static int      g_lastAngle  = 0;
 static int      g_lastDist   = 0;
 static int      g_maxRange   = 200;
+static int      g_alertCm    = NX_ALERT_CM;
 static bool     g_paused     = false;
 
 static uint32_t g_nextDrawMs = 0;
@@ -210,7 +211,7 @@ static void drawRadar() {
     int y = NX_RADAR_CY + (int)(sinf(rad) * r);
 
     int colour;
-    if (b.dist <= NX_ALERT_CM) colour = NX_C_AMBER;
+    if (b.dist <= g_alertCm) colour = NX_C_AMBER;
     else if (age < 2500UL)     colour = NX_C_GREEN;
     else                       colour = NX_C_DIM;
 
@@ -233,7 +234,7 @@ static void drawRadar() {
 static void updateRadarText() {
   uint32_t now = millis();
   int nearCm = nearestCm(now);
-  bool water = (nearCm > 0 && nearCm <= NX_ALERT_CM);
+  bool water = (nearCm > 0 && nearCm <= g_alertCm);
 
   if (g_lastShownDist != g_lastDist) {
     g_lastShownDist = g_lastDist;
@@ -459,9 +460,11 @@ inline void addReading(int angle, int distance) {
   }
 }
 
-inline void setConfig(int maxRange, bool paused) {
+inline void setConfig(int maxRange, bool paused, int alertCm) {
   g_maxRange = constrain(maxRange, 40, 400);
   g_paused = paused;
+  g_alertCm = constrain(alertCm, 10, 150);
+  g_alertDirty = true;
 }
 
 inline void setNetwork(const char *mode, const char *apip, const char *staip,
@@ -521,7 +524,7 @@ namespace NextionUI {
 inline void setCallbacks(NextionRangeCallback, NextionVoidCallback) {}
 inline void begin() {}
 inline void addReading(int, int) {}
-inline void setConfig(int, bool) {}
+inline void setConfig(int, bool, int) {}
 inline void setNetwork(const char *, const char *, const char *, int, unsigned long, const char *) {}
 inline void loop() {}
 }  // namespace NextionUI

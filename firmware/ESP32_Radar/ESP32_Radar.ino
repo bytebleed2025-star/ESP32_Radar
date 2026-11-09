@@ -361,7 +361,7 @@ static void sendConfig(uint8_t num) {
   if (num == 255) webSocket.broadcastTXT(buf, n);
   else            webSocket.sendTXT(num, buf, n);
 
-  NextionUI::setConfig(maxRangeCm, g_paused);
+  NextionUI::setConfig(maxRangeCm, g_paused, g_alertCm);
 }
 
 static void sendStatus() {
