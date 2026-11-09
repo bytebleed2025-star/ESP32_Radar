@@ -100,6 +100,7 @@ static bool     g_paused     = false;
 
 static uint32_t g_nextDrawMs = 0;
 static uint32_t g_nextTextMs = 0;
+static uint32_t g_bootDeadlineMs = 0;   // fallback if the welcome page never reports
 
 static int      g_lastShownAngle = -1;
 static int      g_lastShownDist  = -1;
@@ -326,7 +327,18 @@ static void handleTouch(uint8_t page, uint8_t comp, uint8_t event) {
 static void handleTextCommand(const char *line) {
   Serial.printf("[NX] cmd %s\n", line);
 
-  if (strcmp(line, "NX:INFO") == 0) {
+  if (strcmp(line, "NX:READY") == 0) {
+    // The welcome animation has finished and page 0 (radar) is opening.
+    g_ready = true;
+    g_page = NX_PAGE_RADAR;
+    g_lastShownAngle = -1;
+    g_lastShownDist  = -1;
+    g_lastShownNear  = -1;
+    g_alertDirty     = true;
+    g_nextDrawMs = millis() + 200;
+    g_nextTextMs = millis() + 200;
+    Serial.println("[NX] Welcome finished, radar page active");
+  } else if (strcmp(line, "NX:INFO") == 0) {
     g_page = NX_PAGE_INFO;
     g_nextTextMs = 0;
     g_nextDrawMs = 0;
@@ -417,19 +429,19 @@ inline void begin() {
   NxSerial.begin(NX_BAUD, SERIAL_8N1, NX_RX_PIN, NX_TX_PIN);
   NxSerial.setTxBufferSize(2048);
 
-  // The Nextion boots slower than the ESP32. Give it time before the first
-  // commands (the HMI is already showing page 0 by default).
+  // The Nextion boots slower than the ESP32. The welcome page plays for
+  // 3.5 s and then prints NX:READY; until then, do not draw on it.
   delay(1200);
 
   cmd("bkcmd=0");     // no command-return chatter
   cmd("sendxy=0");    // use component IDs, not raw coordinates
-  cmd("page 0");
   g_page = NX_PAGE_RADAR;
-  g_ready = true;
+  g_ready = false;
+  g_bootDeadlineMs = millis() + 6000UL;
   g_nextDrawMs = 0;
   g_nextTextMs = 0;
 
-  Serial.printf("[NX] Nextion ready: %lu baud, RX=%d TX=%d\n",
+  Serial.printf("[NX] Nextion UART started: %lu baud, RX=%d TX=%d (waiting for welcome)\n",
                 (unsigned long)NX_BAUD, NX_RX_PIN, NX_TX_PIN);
 }
 
@@ -463,9 +475,24 @@ inline void setNetwork(const char *mode, const char *apip, const char *staip,
 }
 
 inline void loop() {
-  if (!g_ready) return;
-
   pollSerial();
+
+  if (!g_ready) {
+    // Custom HMIs without NX:READY still start after a short grace period.
+    if ((int32_t)(millis() - g_bootDeadlineMs) >= 0) {
+      cmd("page 0");
+      g_ready = true;
+      g_page = NX_PAGE_RADAR;
+      g_lastShownAngle = -1;
+      g_lastShownDist  = -1;
+      g_lastShownNear  = -1;
+      g_alertDirty     = true;
+      g_nextDrawMs = millis() + 200;
+      g_nextTextMs = millis() + 200;
+      Serial.println("[NX] Welcome timeout, forcing radar page");
+    }
+    return;
+  }
 
   uint32_t now = millis();
 

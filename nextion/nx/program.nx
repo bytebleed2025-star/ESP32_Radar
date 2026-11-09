@@ -1,4 +1,6 @@
 // DETEKTOR AIR LACAK - Nextion startup
+// The welcome page runs the splash animation, then switches to radar.
+int bootStep=0
 baud=115200
 dim=90
-page radar
+page welcome

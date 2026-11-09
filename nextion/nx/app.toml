@@ -7,8 +7,13 @@ encoding = "iso-8859-1"
 pages = [
     "radar",
     "info",
+    "welcome",
 ]
-pictures = []
+pictures = [
+    "Welcome_screen_1",
+    "Welcome_screen_0",
+    "Page_underlay",
+]
 fonts = [
     "Sans16",
     "SansBold24",

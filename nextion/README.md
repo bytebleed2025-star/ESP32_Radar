@@ -13,6 +13,10 @@ These are **preview renders**, not screenshots of a flashed display. The
 combined device view is [`render/preview.png`](render/preview.png), and the
 HTML renderer is [`render/render.html`](render/render.html).
 
+| Welcome (1.5 s) | LACAK (2 s) | Page underlay |
+|---|---|---|
+| ![](Welcome_screen_1.png) | ![](Welcome_screen_0.png) | ![](Page_underlay.png) |
+
 ## Prebuilt HMI (included)
 
 The ready-to-flash screen project is included:
@@ -21,10 +25,13 @@ The ready-to-flash screen project is included:
 - **`nextion/DetektorAir.HMI`** — open this in Nextion Editor (build artifact)
 - **`nextion/nx/`** — text source for the same project (nxwright)
 
+> The HMI is a build artifact. If Nextion Editor already has an older copy
+> open, close it without saving first; Windows locks the file while it is open.
+
 The TFT was built with **Nextion Editor 1.68.2’s firmware** for the
 **NX3224T028**, rotation **90°** (320×240 landscape), baud **115200**.
-The compiled app uses **248 + 496 bytes** of the 3584 bytes of page RAM, and the
-TFT is **376,728 bytes** (about 368 KB).
+The compiled app uses **256 + 504 + 36 bytes** of the 3584 bytes of page RAM,
+and the TFT is **846,708 bytes** (about 827 KB).
 
 The prebuilt HMI uses **hotspots + text tiles**, not component-ID buttons. Its
 hotspots send short serial commands:
@@ -34,6 +41,24 @@ NX:INFO   NX:BACK   NX:R100   NX:R200   NX:R300   NX:PAUSE
 ```
 
 The ESP32 parses them; no “Send Component ID” setup is needed.
+
+### Welcome animation
+
+Page 2 (`welcome`) plays at power-on:
+
+| Time | Image |
+|---|---|
+| 0.0 s – 1.5 s | `Welcome_screen_1.png` (full logo) |
+| 1.5 s – 3.5 s | `Welcome_screen_0.png` (LACAK) |
+| 3.5 s onward | page 0 (`radar`) |
+
+At the end it prints `NX:READY`; the ESP32 waits for that before drawing the
+radar, so the boot animation is not overwritten. A custom HMI without
+`NX:READY` still starts after a **6 s** fallback.
+
+Page 0 and page 1 use **`Page_underlay.png`** (the logo watermark shown under
+the UI) as their background picture. The original `Background_underlay.png` is
+kept as the source artwork.
 
 ### Flash with microSD
 
@@ -78,6 +103,8 @@ Nextion’s site.
     ESP32 using `fill` / `cir` / `line` / `cirs` primitives
 
 - Page 1 (`info`) shows network status and **range / pause** buttons.
+- Page 2 (`welcome`) is the boot animation described above and is not used
+  during normal operation.
 - The prebuilt HMI reports touches with short text commands (`NX:INFO`, etc.).
   Custom HMIs may also use component IDs. The ESP32 applies range/pause
   changes and broadcasts them to the web UI.
@@ -131,6 +158,12 @@ Nextion GND ────────────────────── G
 2. Create two pages **in this order**:
    - page index **0**, name `radar`
    - page index **1**, name `info`
+
+   > The included prebuilt HMI adds a third page at index **2**, `welcome`, for
+   > the boot animation. Radar and info stay at 0 and 1 so the firmware’s page
+   > constants still match. A custom two-page build can skip the welcome page
+   > and start on page 0.
+
 3. In **Program.s** add:
 
    ```text
@@ -267,8 +300,9 @@ Change the following in `nextion_ui.h` if needed:
 ```
 
 - Set `NEXTION_ENABLED 0` in `ESP32_Radar.ino` if the display is not connected.
-- The ESP32 starts the Nextion after the web server/OTA setup and waits 1.2 s
-  for the display to boot.
+- The ESP32 starts the Nextion after the web server/OTA setup, waits 1.2 s for
+  the display to boot, then waits for the welcome page’s `NX:READY` (or a 6 s
+  fallback) before drawing the radar.
 - The Nextion range/pause buttons call the same firmware state as the web UI;
   the web UI receives a `cfg` broadcast and stays in sync.
 - The radar page is drawn for the last 12 contacts in an ~8 s window.
@@ -281,15 +315,21 @@ Change the following in `nextion_ui.h` if needed:
 Normal serial output after boot:
 
 ```text
-[NX] Nextion ready: 115200 baud, RX=16 TX=17
+[NX] Nextion UART started: 115200 baud, RX=16 TX=17 (waiting for welcome)
+...
+[NX] cmd NX:READY
+[NX] Welcome finished, radar page active
 ...
 [NX] cmd NX:INFO
 [NX] cmd NX:R200
 ```
 
 Custom component-ID HMIs additionally print `[NX] touch page=... comp=...`.
+A custom HMI that never sends `NX:READY` logs
+`[NX] Welcome timeout, forcing radar page` after 6 s.
 
-- Page 0 should show the radar and numbers immediately.
+- The welcome animation should play for about 3.5 s, then page 0 shows the
+  radar and numbers.
 - Press INFO → page 1. Press 100/200/300 → the radar range changes and the web
   UI range slider follows. Press JEDA → the sweep pauses; the web UI shows
   “JEDA”.
@@ -305,6 +345,9 @@ If you see values but no radar, check the radar area is empty in the HMI (the
 | Symptom | Check |
 |---|---|
 | Display white/blank | 5 V power, common ground, HMI flashed, baud 115200. |
+| Welcome animation skipped | The TFT is old or `program.nx` still says `page radar`; rebuild and flash the new TFT. |
+| Radar appears after ~6 s instead of 3.5 s | The welcome page’s `NX:READY` did not reach the ESP32 (Nextion TX/divider, firmware without the new parser); the fallback forces page 0. |
+| Underlay not visible | It sits behind the text tiles’ opaque backgrounds; it shows only in the gaps. Check the `pUnderlay` picture is present on pages 0 and 1. |
 | No text updates | Baud mismatch (9600 vs 115200), wrong object names, page 0 not loaded, `txt_maxl` too small. |
 | Touch does nothing (prebuilt HMI) | Baud 115200, HMI flashed, Nextion TX divider, and check for `[NX] cmd ...` in the serial log. |
 | Touch does nothing (custom HMI) | **Send Component ID** not checked; wrong component ID; TX/RX swapped; level divider. |

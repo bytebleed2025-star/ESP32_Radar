@@ -1,0 +1,24 @@
+[page]
+name = "welcome"
+type = "page"
+x = 0
+y = 0
+w = 320
+h = 240
+sta = 1
+bco = "#020906"
+
+[[component]]
+name = "pWelcome"
+type = "picture"
+x = 0
+y = 0
+w = 320
+h = 240
+pic = "Welcome_screen_1"
+
+[[component]]
+name = "tBoot"
+type = "timer"
+tim = 1500
+en = 1

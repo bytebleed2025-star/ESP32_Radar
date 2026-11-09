@@ -9,6 +9,15 @@ sta = 1
 bco = "#020906"
 
 [[component]]
+name = "pUnderlay"
+type = "picture"
+x = 0
+y = 0
+w = 320
+h = 240
+pic = "Page_underlay"
+
+[[component]]
 name = "tTitle"
 type = "text"
 x = 8

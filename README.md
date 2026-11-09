@@ -29,7 +29,7 @@ backdrop and header logo (served as `web/logo.jpg`).
 - **CONFIG tab** — WiFi scan, STA/AP credentials, hostname and factory reset,
   saved in NVS and applied at boot
 - **OTA updates** — web upload from the Config tab and ArduinoOTA on port 3232
-- Optional **Nextion NX3224T028** local UI on UART2 (radar page + info/control page) while the web UI keeps running
+- Optional **Nextion NX3224T028** local UI on UART2 (3.5 s welcome animation, radar page, info/control page, shared watermark underlay) while the web UI keeps running
 - Automatic browser reconnect, full-screen mode, optional sonar ping sound
 - Responsive layout for phone, tablet and desktop
 - `?demo=1` simulation mode — preview the UI with no hardware
@@ -236,10 +236,13 @@ Readouts:
 The optional NX3224T028 gives you a local 2.8″ touch panel. It runs at the same
 time as the web UI:
 
+- **Page 2 — WELCOME**: `Welcome_screen_1` for 1.5 s, then
+  `Welcome_screen_0` for 2 s, then the radar page.
 - **Page 0 — RADAR**: distance, angle, nearest, alert, and a 5 FPS PPI sweep
   with the latest contacts.
 - **Page 1 — INFO/KONTROL**: AP/STA IPs, RSSI, uptime, firmware, range buttons
   (100/200/300 cm) and pause/continue. Changes are mirrored to the web UI.
+- Pages 0 and 1 share the `Page_underlay.png` watermark background.
 
 A **ready-to-flash screen** is included:
 
@@ -451,12 +454,12 @@ booting, move TRIG away from GPIO 5 (a strapping pin) to GPIO 4, and update the
 
 - **Arduino IDE / arduino-cli** — ESP32 core **3.3.12**, ESP32Servo **3.2.1**,
   WebSockets **2.7.2**, partition scheme `min_spiffs` (1.9 MB OTA slot):
-  **1,150,406 bytes (58%) flash**, **55,096 bytes (16%) RAM**
+  **1,150,750 bytes (58%) flash**, **55,096 bytes (16%) RAM**
 - **PlatformIO Core 6.2.0** — `espressif32@7.0.1` (Arduino core 2.0.17),
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
-  **986,477 bytes (50.2%) flash**, **52,456 bytes (16.0%) RAM**
+  **986,881 bytes (50.2%) flash**, **52,464 bytes (16.0%) RAM**
 - **Nextion** — nxwright 0.2.5 + Nextion Editor 1.68.2 firmware →
-  `nextion/NX3224T028.tft` (**376,728 bytes**); page RAM 248 + 496 of 3584
+  `nextion/NX3224T028.tft` (**846,708 bytes**); page RAM 256 + 504 + 36 of 3584
   bytes
 - UI/API integration in Chromium against a mock HTTP + WebSocket device:
   network scan, config save, OTA upload, reboot overlay and tab switching.

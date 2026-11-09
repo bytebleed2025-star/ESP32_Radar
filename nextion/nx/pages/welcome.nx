@@ -1,0 +1,14 @@
+// Boot animation:
+//   welcome_screen_1  1.5 s
+//   welcome_screen_0  2.0 s
+//   then radar page
+on tBoot.timer:
+  if (bootStep == 0) {
+    bootStep = 1
+    pWelcome.pic = @pic(Welcome_screen_0)
+    tBoot.tim = 2000
+  } else {
+    tBoot.en = 0
+    prints "NX:READY\r",0
+    page radar
+  }
