@@ -1,3 +1,7 @@
+on bCtrl.up:
+  prints "NX:CTRL\r",0
+  page control
+
 on bBack.up:
   prints "NX:BACK\r",0
   page radar

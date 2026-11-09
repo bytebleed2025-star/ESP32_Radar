@@ -1,0 +1,448 @@
+[page]
+name = "control"
+type = "page"
+x = 0
+y = 0
+w = 320
+h = 240
+sta = 1
+bco = "#020906"
+
+[[component]]
+name = "pUnderlay"
+type = "picture"
+x = 0
+y = 0
+w = 320
+h = 240
+pic = "Page_control"
+
+[[component]]
+name = "tCtlTitle"
+type = "text"
+x = 8
+y = 0
+w = 220
+h = 24
+sta = 1
+bco = "#0A1710"
+pco = "#E6FFF0"
+font = "Sans20"
+xcen = 0
+ycen = 1
+txt = "KONTROL SERVO"
+txt_maxl = 20
+
+[[component]]
+name = "tCtlBack"
+type = "text"
+x = 258
+y = 0
+w = 54
+h = 24
+sta = 1
+bco = "#10271A"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "BACK"
+txt_maxl = 6
+
+[[component]]
+name = "tCtlModeLbl"
+type = "text"
+x = 8
+y = 30
+w = 48
+h = 16
+sta = 1
+bco = "#0A1710"
+pco = "#6FAF8C"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "MODE"
+txt_maxl = 6
+
+[[component]]
+name = "tAuto"
+type = "text"
+x = 60
+y = 28
+w = 64
+h = 24
+sta = 1
+bco = "#123626"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "AUTO"
+txt_maxl = 6
+
+[[component]]
+name = "tHand"
+type = "text"
+x = 130
+y = 28
+w = 64
+h = 24
+sta = 1
+bco = "#10271A"
+pco = "#6FAF8C"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "HAND"
+txt_maxl = 6
+
+[[component]]
+name = "tMode"
+type = "text"
+x = 200
+y = 28
+w = 112
+h = 24
+sta = 1
+bco = "#0A1710"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "AUTO"
+txt_maxl = 6
+
+[[component]]
+name = "tCtlHold"
+type = "text"
+x = 8
+y = 58
+w = 190
+h = 34
+sta = 1
+bco = "#2A1F0A"
+pco = "#FFC857"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "TAHAN = GERAK"
+txt_maxl = 20
+
+[[component]]
+name = "tAngle"
+type = "text"
+x = 204
+y = 58
+w = 108
+h = 34
+sta = 1
+bco = "#0A1710"
+pco = "#E6FFF0"
+font = "Sans20"
+xcen = 1
+ycen = 1
+txt = "90°"
+txt_maxl = 8
+
+[[component]]
+name = "tCtlAngMinus"
+type = "text"
+x = 8
+y = 98
+w = 70
+h = 28
+sta = 1
+bco = "#10271A"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "-5°"
+txt_maxl = 6
+
+[[component]]
+name = "tCtlAngPlus"
+type = "text"
+x = 84
+y = 98
+w = 70
+h = 28
+sta = 1
+bco = "#10271A"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "+5°"
+txt_maxl = 6
+
+[[component]]
+name = "tCtlSpdLbl"
+type = "text"
+x = 8
+y = 132
+w = 56
+h = 16
+sta = 1
+bco = "#0A1710"
+pco = "#6FAF8C"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "SPEED"
+txt_maxl = 6
+
+[[component]]
+name = "tCtlSpd1"
+type = "text"
+x = 68
+y = 130
+w = 48
+h = 28
+sta = 1
+bco = "#10271A"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "1°"
+txt_maxl = 4
+
+[[component]]
+name = "tCtlSpd2"
+type = "text"
+x = 122
+y = 130
+w = 48
+h = 28
+sta = 1
+bco = "#10271A"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "2°"
+txt_maxl = 4
+
+[[component]]
+name = "tCtlSpd5"
+type = "text"
+x = 176
+y = 130
+w = 48
+h = 28
+sta = 1
+bco = "#10271A"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "5°"
+txt_maxl = 4
+
+[[component]]
+name = "tStepVal"
+type = "text"
+x = 230
+y = 130
+w = 82
+h = 28
+sta = 1
+bco = "#0A1710"
+pco = "#E6FFF0"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "2°"
+txt_maxl = 4
+
+[[component]]
+name = "tBuzz"
+type = "text"
+x = 8
+y = 166
+w = 150
+h = 28
+sta = 1
+bco = "#10271A"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "BUZZER: ON"
+txt_maxl = 16
+
+[[component]]
+name = "tCtlThrMinus"
+type = "text"
+x = 164
+y = 166
+w = 70
+h = 28
+sta = 1
+bco = "#10271A"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "THR-"
+txt_maxl = 6
+
+[[component]]
+name = "tCtlThrPlus"
+type = "text"
+x = 240
+y = 166
+w = 72
+h = 28
+sta = 1
+bco = "#10271A"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "THR+"
+txt_maxl = 6
+
+[[component]]
+name = "tThr"
+type = "text"
+x = 8
+y = 200
+w = 150
+h = 24
+sta = 1
+bco = "#0A1710"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "AMBANG 50 cm"
+txt_maxl = 16
+
+[[component]]
+name = "tPause2"
+type = "text"
+x = 164
+y = 200
+w = 70
+h = 28
+sta = 1
+bco = "#10271A"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "JEDA"
+txt_maxl = 6
+
+[[component]]
+name = "tHoldBeat"
+type = "timer"
+tim = 250
+en = 0
+
+[[component]]
+name = "bCtlBack"
+type = "hotspot"
+x = 258
+y = 0
+w = 54
+h = 24
+
+[[component]]
+name = "bCtlAuto"
+type = "hotspot"
+x = 60
+y = 28
+w = 64
+h = 24
+
+[[component]]
+name = "bCtlHand"
+type = "hotspot"
+x = 130
+y = 28
+w = 64
+h = 24
+
+[[component]]
+name = "bCtlHold"
+type = "hotspot"
+x = 8
+y = 58
+w = 190
+h = 34
+
+[[component]]
+name = "bCtlAngMinus"
+type = "hotspot"
+x = 8
+y = 98
+w = 70
+h = 28
+
+[[component]]
+name = "bCtlAngPlus"
+type = "hotspot"
+x = 84
+y = 98
+w = 70
+h = 28
+
+[[component]]
+name = "bCtlSpd1"
+type = "hotspot"
+x = 68
+y = 130
+w = 48
+h = 28
+
+[[component]]
+name = "bCtlSpd2"
+type = "hotspot"
+x = 122
+y = 130
+w = 48
+h = 28
+
+[[component]]
+name = "bCtlSpd5"
+type = "hotspot"
+x = 176
+y = 130
+w = 48
+h = 28
+
+[[component]]
+name = "bCtlBuzz"
+type = "hotspot"
+x = 8
+y = 166
+w = 150
+h = 28
+
+[[component]]
+name = "bCtlThrMinus"
+type = "hotspot"
+x = 164
+y = 166
+w = 70
+h = 28
+
+[[component]]
+name = "bCtlThrPlus"
+type = "hotspot"
+x = 240
+y = 166
+w = 72
+h = 28
+
+[[component]]
+name = "bCtlPause"
+type = "hotspot"
+x = 164
+y = 200
+w = 70
+h = 28

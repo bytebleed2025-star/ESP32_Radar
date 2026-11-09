@@ -1,0 +1,56 @@
+on bCtlBack.up:
+  prints "NX:CTRLBACK\r",0
+  page info
+
+on bCtlAuto.up:
+  prints "NX:AUTO\r",0
+
+on bCtlHand.up:
+  prints "NX:HAND\r",0
+
+// Momentary hand movement: heartbeat while the button is held.
+on bCtlHold.down:
+  hold = 1
+  tHoldBeat.en = 1
+  prints "NX:HOLDON\r",0
+
+on bCtlHold.up:
+  hold = 0
+  tHoldBeat.en = 0
+  prints "NX:HOLDOFF\r",0
+
+on tHoldBeat.timer:
+  if (hold == 1) {
+    prints "NX:HOLDON\r",0
+  }
+
+on bCtlAngMinus.up:
+  prints "NX:ANG-\r",0
+
+on bCtlAngPlus.up:
+  prints "NX:ANG+\r",0
+
+on bCtlSpd1.up:
+  prints "NX:SPD1\r",0
+
+on bCtlSpd2.up:
+  prints "NX:SPD2\r",0
+
+on bCtlSpd5.up:
+  prints "NX:SPD5\r",0
+
+on bCtlBuzz.up:
+  prints "NX:BUZZ\r",0
+
+on bCtlThrMinus.up:
+  prints "NX:THR-\r",0
+
+on bCtlThrPlus.up:
+  prints "NX:THR+\r",0
+
+on bCtlPause.up:
+  prints "NX:PAUSE\r",0
+
+on control.unload:
+  hold = 0
+  tHoldBeat.en = 0

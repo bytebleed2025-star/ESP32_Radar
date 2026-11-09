@@ -363,7 +363,10 @@ static void sendConfig(uint8_t num) {
   if (num == 255) webSocket.broadcastTXT(buf, n);
   else            webSocket.sendTXT(num, buf, n);
 
-  NextionUI::setConfig(maxRangeCm, g_paused, g_alertCm);
+  NextionUI::setConfig(maxRangeCm, g_paused, g_alertCm,
+                       g_handMode,
+                       g_handMode ? g_manualTarget : g_angle,
+                       stepDeg, g_buzzerEnabled);
 }
 
 static void sendStatus() {
@@ -398,6 +401,60 @@ static void onNextionRange(int cm) {
 static void onNextionPause() {
   g_paused = !g_paused;
   servo.write(servoPosFor(g_angle));
+  sendConfig(255);
+}
+
+// Control page commands from the Nextion (page 1).
+static void onNextionCommand(const char *cmd) {
+  if (strcmp(cmd, "NX:AUTO") == 0) {
+    g_handMode = false;
+    g_handSweep = false;
+    g_paused = false;
+    g_direction = 1;
+  } else if (strcmp(cmd, "NX:HAND") == 0) {
+    g_handMode = true;
+    g_handSweep = false;
+    g_paused = true;
+    g_manualTarget = g_angle;
+    servo.write(servoPosFor(g_angle));
+  } else if (strcmp(cmd, "NX:HOLDON") == 0) {
+    g_handMode = true;
+    g_handSweep = true;
+    g_handHoldUntil = millis() + 800UL;
+    g_paused = false;
+    g_lastHandPingMs = 0;
+  } else if (strcmp(cmd, "NX:HOLDOFF") == 0) {
+    g_handSweep = false;
+    g_paused = true;
+  } else if (strcmp(cmd, "NX:ANG+") == 0) {
+    g_handMode = true;
+    g_handSweep = false;
+    g_manualTarget = constrain(g_manualTarget + 5, 0, 180);
+    g_paused = false;
+  } else if (strcmp(cmd, "NX:ANG-") == 0) {
+    g_handMode = true;
+    g_handSweep = false;
+    g_manualTarget = constrain(g_manualTarget - 5, 0, 180);
+    g_paused = false;
+  } else if (strcmp(cmd, "NX:SPD1") == 0) {
+    stepDeg = 1;
+  } else if (strcmp(cmd, "NX:SPD2") == 0) {
+    stepDeg = 2;
+  } else if (strcmp(cmd, "NX:SPD5") == 0) {
+    stepDeg = 5;
+  } else if (strcmp(cmd, "NX:BUZZ") == 0) {
+    g_buzzerEnabled = !g_buzzerEnabled;
+    if (!g_buzzerEnabled) {
+      g_buzzerLevel = false;
+      buzzerWrite(false);
+    }
+  } else if (strcmp(cmd, "NX:THR+") == 0) {
+    g_alertCm = constrain(g_alertCm + 5, 10, 150);
+  } else if (strcmp(cmd, "NX:THR-") == 0) {
+    g_alertCm = constrain(g_alertCm - 5, 10, 150);
+  } else {
+    return;
+  }
   sendConfig(255);
 }
 
@@ -972,6 +1029,7 @@ void setup() {
 
   // Nextion display (UART2). It boots slower than the ESP32.
   NextionUI::setCallbacks(onNextionRange, onNextionPause);
+  NextionUI::setCommandCallback(onNextionCommand);
   NextionUI::begin();
 
   Serial.println("------------------------------------------");

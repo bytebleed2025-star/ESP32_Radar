@@ -31,7 +31,7 @@ backdrop and header logo (served as `web/logo.jpg`).
 - **CONFIG tab** — WiFi scan, STA/AP credentials, hostname and factory reset,
   saved in NVS and applied at boot
 - **OTA updates** — web upload from the Config tab and ArduinoOTA on port 3232
-- Optional **Nextion NX3224T028** local UI on UART2 (3.5 s welcome animation, radar page, info/control page, shared watermark underlay) while the web UI keeps running
+- Optional **Nextion NX3224T028** local UI on UART2 (modern card theme: welcome animation, radar, control and info pages) while the web UI keeps running
 - Automatic browser reconnect, full-screen mode, optional sonar ping sound
 - Responsive layout for phone, tablet and desktop
 - `?demo=1` simulation mode — preview the UI with no hardware
@@ -243,14 +243,17 @@ Readouts:
 The optional NX3224T028 gives you a local 2.8″ touch panel. It runs at the same
 time as the web UI:
 
+- **Page 0 — RADAR**: distance, angle, nearest, alert, and a 5 FPS PPI sweep
+  with the latest contacts.
+- **Page 1 — CONTROL**: AUTO/HAND, momentary **GERAK** (hold), angle −/+, speed
+  1/2/5°, buzzer ON/OFF, threshold −/+ and pause.
 - **Page 2 — WELCOME**: `Welcome_screen_1` (picture ID 0) for 1.5 s, then
   `Welcome_screen_0` (picture ID 1) appears over it for 2 s, then the radar
   page. The base logo stays on screen during the second phase.
-- **Page 0 — RADAR**: distance, angle, nearest, alert, and a 5 FPS PPI sweep
-  with the latest contacts.
-- **Page 1 — INFO/KONTROL**: AP/STA IPs, RSSI, uptime, firmware, range buttons
-  (100/200/300 cm) and pause/continue. Changes are mirrored to the web UI.
-- Pages 0 and 1 share the `Page_underlay.png` watermark background.
+- **Page 3 — INFO**: AP/STA IPs, RSSI, uptime, firmware, range buttons
+  (100/200/300 cm) and pause/continue; **CTRL** opens page 1.
+- Pages 0, 1 and 3 use modern card backgrounds (`Page_radar.png`,
+  `Page_control.png`, `Page_info.png`); `Page_underlay.png` is kept as source artwork.
 
 A **ready-to-flash screen** is included:
 
@@ -486,13 +489,13 @@ directly.
 
 - **Arduino IDE / arduino-cli** — ESP32 core **3.3.12**, ESP32Servo **3.2.1**,
   WebSockets **2.7.2**, partition scheme `min_spiffs` (1.9 MB OTA slot):
-  **1,160,238 bytes (59%) flash**, **55,136 bytes (16%) RAM**
+  **1,163,274 bytes (59%) flash**, **55,144 bytes (16%) RAM**
 - **PlatformIO Core 6.2.0** — `espressif32@7.0.1` (Arduino core 2.0.17),
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
-  **996,269 bytes (50.7%) flash**, **52,512 bytes (16.0%) RAM**
+  **999,233 bytes (50.8%) flash**, **52,512 bytes (16.0%) RAM**
 - **Nextion** — nxwright 0.2.5 + Nextion Editor 1.68.2 firmware →
-  `nextion/NX3224T028.tft` (**847,708 bytes**); page RAM 256 + 504 + 40 of 3584
-  bytes
+  `nextion/NX3224T028.tft` (**1,231,916 bytes**); page RAM
+  260 + 452 + 44 + 528 of 3584 bytes
 - UI/API integration in Chromium against a mock HTTP + WebSocket device:
   network scan, config save, OTA upload, reboot overlay and tab switching.
   The radio/servo/OTA behaviour and the Nextion UART/touch/drawing still need a

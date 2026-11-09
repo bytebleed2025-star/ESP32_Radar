@@ -6,13 +6,16 @@ rotation = 90
 encoding = "iso-8859-1"
 pages = [
     "radar",
-    "info",
+    "control",
     "welcome",
+    "info",
 ]
 pictures = [
     "Welcome_screen_1",
     "Welcome_screen_0",
-    "Page_underlay",
+    "Page_radar",
+    "Page_control",
+    "Page_info",
 ]
 fonts = [
     "Sans16",

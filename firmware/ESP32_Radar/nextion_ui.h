@@ -47,17 +47,19 @@
 #endif
 
 // Nextion page indices (keep this order in the HMI design).
-#define NX_PAGE_RADAR 0
-#define NX_PAGE_INFO  1
+#define NX_PAGE_RADAR   0
+#define NX_PAGE_CONTROL 1
+#define NX_PAGE_WELCOME 2
+#define NX_PAGE_INFO    3
 
-// Touch component IDs. These must match the buttons in the HMI.
-// If your Nextion Editor assigned different IDs, change them here.
+// Touch component IDs for custom component-ID HMIs. The prebuilt HMI
+// uses the NX:... text commands instead.
 #define NX_ID_INFO   1   // page 0: INFO button
-#define NX_ID_BACK   1   // page 1: BACK button
-#define NX_ID_R100   2   // page 1
-#define NX_ID_R200   3   // page 1
-#define NX_ID_R300   4   // page 1
-#define NX_ID_PAUSE  5   // page 1
+#define NX_ID_BACK   1   // page 3: BACK button
+#define NX_ID_R100   2   // page 3
+#define NX_ID_R200   3   // page 3
+#define NX_ID_R300   4   // page 3
+#define NX_ID_PAUSE  5   // page 3
 
 // Radar drawing geometry (must match the empty black area on page 0).
 #define NX_RADAR_CX 160
@@ -71,9 +73,12 @@
 #define NX_C_GREEN 24564   // #58FFA1
 #define NX_C_DIM   7113    // #1E7A4C
 #define NX_C_AMBER 65098   // #FFC857
+#define NX_C_PILL   4387   // #10271A
+#define NX_C_ACTIVE 4516   // #123626
 
 typedef void (*NextionRangeCallback)(int cm);
 typedef void (*NextionVoidCallback)();
+typedef void (*NextionCommandCallback)(const char *cmd);
 
 #if NEXTION_ENABLED
 
@@ -98,6 +103,10 @@ static int      g_lastDist   = 0;
 static int      g_maxRange   = 200;
 static int      g_alertCm    = NX_ALERT_CM;
 static bool     g_paused     = false;
+static bool     g_hand       = false;
+static int      g_target     = 90;
+static int      g_step       = 2;
+static bool     g_buzzer     = true;
 
 static uint32_t g_nextDrawMs = 0;
 static uint32_t g_nextTextMs = 0;
@@ -123,8 +132,9 @@ static String g_fw;
 static int    g_rssi = 0;
 static uint32_t g_up = 0;
 
-static NextionRangeCallback g_onRange = nullptr;
-static NextionVoidCallback  g_onPause = nullptr;
+static NextionRangeCallback  g_onRange = nullptr;
+static NextionVoidCallback   g_onPause = nullptr;
+static NextionCommandCallback g_onCommand = nullptr;
 
 // ---------------------------------------------------------------------------
 
@@ -268,6 +278,28 @@ static void updateInfoText() {
 }
 
 // ---------------------------------------------------------------------------
+//  Control page text
+// ---------------------------------------------------------------------------
+
+static void updateControlText() {
+  cmd("tMode.txt=\"" + String(g_hand ? "HAND" : "AUTO") + "\"");
+  cmd("tAngle.txt=\"" + String(g_hand ? g_target : g_lastAngle) + "°\"");
+  cmd("tStepVal.txt=\"" + String(g_step) + "°\"");
+  cmd("tBuzz.txt=\"BUZZER: " + String(g_buzzer ? "ON" : "OFF") + "\"");
+  cmd("tThr.txt=\"AMBANG " + String(g_alertCm) + " cm\"");
+  cmd("tPause2.txt=\"" + String(g_paused ? "LANJUT" : "JEDA") + "\"");
+  cmd("tAuto.bco=" + String(g_hand ? NX_C_PILL : NX_C_ACTIVE));
+  cmd("tHand.bco=" + String(g_hand ? NX_C_ACTIVE : NX_C_PILL));
+  cmd("tAuto.pco=" + String(g_hand ? NX_C_DIM : NX_C_GREEN));
+  cmd("tHand.pco=" + String(g_hand ? NX_C_GREEN : NX_C_DIM));
+  cmd("tCtlSpd1.pco=" + String(g_step == 1 ? NX_C_GREEN : NX_C_DIM));
+  cmd("tCtlSpd2.pco=" + String(g_step == 2 ? NX_C_GREEN : NX_C_DIM));
+  cmd("tCtlSpd5.pco=" + String(g_step == 5 ? NX_C_GREEN : NX_C_DIM));
+  cmd("tBuzz.pco=" + String(g_buzzer ? NX_C_GREEN : NX_C_DIM));
+  cmd("tPause2.pco=" + String(g_paused ? NX_C_AMBER : NX_C_GREEN));
+}
+
+// ---------------------------------------------------------------------------
 //  Touch
 // ---------------------------------------------------------------------------
 
@@ -289,7 +321,7 @@ static void handleTouch(uint8_t page, uint8_t comp, uint8_t event) {
   if (page == NX_PAGE_RADAR) {
     if (comp == NX_ID_INFO) {
       g_page = NX_PAGE_INFO;
-      cmd("page 1");
+      cmd("page 3");
       g_nextTextMs = 0;
     }
     return;
@@ -339,6 +371,14 @@ static void handleTextCommand(const char *line) {
     g_nextDrawMs = millis() + 200;
     g_nextTextMs = millis() + 200;
     Serial.println("[NX] Welcome finished, radar page active");
+  } else if (strcmp(line, "NX:CTRL") == 0) {
+    g_page = NX_PAGE_CONTROL;
+    g_nextTextMs = 0;
+    g_nextDrawMs = 0;
+  } else if (strcmp(line, "NX:CTRLBACK") == 0) {
+    g_page = NX_PAGE_INFO;
+    g_nextTextMs = 0;
+    g_nextDrawMs = 0;
   } else if (strcmp(line, "NX:INFO") == 0) {
     g_page = NX_PAGE_INFO;
     g_nextTextMs = 0;
@@ -359,6 +399,14 @@ static void handleTextCommand(const char *line) {
     if (g_onRange) g_onRange(300);
   } else if (strcmp(line, "NX:PAUSE") == 0) {
     if (g_onPause) g_onPause();
+  } else if (strncmp(line, "NX:AUTO", 7) == 0 ||
+             strncmp(line, "NX:HAND", 7) == 0 ||
+             strncmp(line, "NX:HOLD", 7) == 0 ||
+             strncmp(line, "NX:ANG", 6) == 0 ||
+             strncmp(line, "NX:SPD", 6) == 0 ||
+             strncmp(line, "NX:BUZZ", 7) == 0 ||
+             strncmp(line, "NX:THR", 6) == 0) {
+    if (g_onCommand) g_onCommand(line);
   }
 }
 
@@ -426,6 +474,10 @@ inline void setCallbacks(NextionRangeCallback onRange, NextionVoidCallback onPau
   g_onPause = onPause;
 }
 
+inline void setCommandCallback(NextionCommandCallback onCommand) {
+  g_onCommand = onCommand;
+}
+
 inline void begin() {
   NxSerial.begin(NX_BAUD, SERIAL_8N1, NX_RX_PIN, NX_TX_PIN);
   NxSerial.setTxBufferSize(2048);
@@ -460,10 +512,15 @@ inline void addReading(int angle, int distance) {
   }
 }
 
-inline void setConfig(int maxRange, bool paused, int alertCm) {
+inline void setConfig(int maxRange, bool paused, int alertCm,
+                      bool hand, int target, int step, bool buzzer) {
   g_maxRange = constrain(maxRange, 40, 400);
   g_paused = paused;
   g_alertCm = constrain(alertCm, 10, 150);
+  g_hand = hand;
+  g_target = constrain(target, 0, 180);
+  g_step = constrain(step, 1, 5);
+  g_buzzer = buzzer;
   g_alertDirty = true;
 }
 
@@ -508,6 +565,11 @@ inline void loop() {
       g_nextTextMs = now + 250;      // 4 Hz readouts
       updateRadarText();
     }
+  } else if (g_page == NX_PAGE_CONTROL) {
+    if ((int32_t)(now - g_nextTextMs) >= 0) {
+      g_nextTextMs = now + 500;      // 2 Hz control page
+      updateControlText();
+    }
   } else {
     if ((int32_t)(now - g_nextTextMs) >= 0) {
       g_nextTextMs = now + 500;      // 2 Hz info page
@@ -522,9 +584,10 @@ inline void loop() {
 
 namespace NextionUI {
 inline void setCallbacks(NextionRangeCallback, NextionVoidCallback) {}
+inline void setCommandCallback(NextionCommandCallback) {}
 inline void begin() {}
 inline void addReading(int, int) {}
-inline void setConfig(int, bool, int) {}
+inline void setConfig(int, bool, int, bool, int, int, bool) {}
 inline void setNetwork(const char *, const char *, const char *, int, unsigned long, const char *) {}
 inline void loop() {}
 }  // namespace NextionUI
