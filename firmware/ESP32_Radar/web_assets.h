@@ -4,7 +4,7 @@
 #pragma once
 #include <pgmspace.h>
 
-static const unsigned int INDEX_HTML_LEN = 71359;
+static const unsigned int INDEX_HTML_LEN = 75572;
 static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 <!DOCTYPE html>
 <html lang="id">
@@ -195,6 +195,24 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
   .panel-head i{ font-style:normal; color:rgba(88,255,161,.35); letter-spacing:.1em; }
   .sub-head{ margin-top:4px; padding-top:12px; border-top:1px dashed rgba(88,255,161,.13); }
 
+  /* mode selector */
+  .mode-switch{
+    display:flex; gap:4px; padding:3px;
+    border:1px solid rgba(88,255,161,.18); border-radius:8px;
+    background:rgba(88,255,161,.03);
+  }
+  .mode-btn{
+    flex:1; height:28px; border:0; border-radius:6px;
+    background:transparent; color:rgba(185,255,214,.45);
+    font-family:var(--mono); font-size:9px; letter-spacing:.18em;
+    cursor:pointer; transition:.16s;
+  }
+  .mode-btn:hover{ color:var(--green); }
+  .mode-btn.active{
+    background:rgba(88,255,161,.16); color:var(--green-bright);
+    box-shadow:0 0 14px rgba(88,255,161,.12);
+  }
+
   /* ---------- telemetry ---------- */
   .stats .metric{ display:flex; flex-direction:column; gap:4px; }
   .metric label{
@@ -332,7 +350,8 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     box-shadow:0 0 12px rgba(88,255,161,.7);
   }
 
-  .btn-row{ display:flex; gap:8px; }
+  .btn-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .btn-row .btn{ min-width:88px; }
   .btn{
     flex:1; height:34px; padding:0 10px;
     display:flex; align-items:center; justify-content:center; gap:7px;
@@ -612,6 +631,11 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       <aside class="panel controls">
         <div class="panel-head"><span>KONTROL</span><i>02</i></div>
 
+        <div class="mode-switch" role="group" aria-label="Mode servo">
+          <button type="button" class="mode-btn active" id="mode-auto">AUTO</button>
+          <button type="button" class="mode-btn" id="mode-hand">HAND</button>
+        </div>
+
         <label class="slider">
           <div class="slider-top"><span>JANGKAUAN <small>RANGE</small></span><b><span id="range-val">200</span> cm</b></div>
           <input id="range" type="range" min="40" max="400" step="10" value="200"/>
@@ -627,9 +651,15 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
           <input id="speed" type="range" min="1" max="5" step="1" value="2"/>
         </label>
 
+        <label class="slider" id="angle-wrap" hidden>
+          <div class="slider-top"><span>SUDUT MANUAL <small>ANGLE</small></span><b><span id="angle-val">90</span>°</b></div>
+          <input id="angle" type="range" min="0" max="180" step="1" value="90"/>
+        </label>
+
         <div class="btn-row">
           <button class="btn" id="pause"><span id="pause-label">JEDA</span></button>
           <button class="btn ghost" id="sound">SUARA: OFF</button>
+          <button class="btn" id="buzzer">BUZZER: ON</button>
         </div>
 
         <div class="panel-head sub-head"><span>TAUTAN</span><i>03</i></div>
@@ -644,7 +674,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 
         <div class="panel-head sub-head"><span>SENSOR</span><i>04</i></div>
         <div class="lines">
-          <div><span>JENIS</span><b>HC-SR04 · SG90</b></div>
+          <div><span>JENIS</span><b>HC-SR04 · MG995</b></div>
           <div><span>SEKTOR</span><b>180°</b></div>
           <div><span>STATUS</span><b id="scan-state">MENYAPU</b></div>
           <div><span>PING</span><b id="pings">0</b></div>
@@ -652,8 +682,8 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 
         <div class="guide">
           <p><b>01</b> Kontak kuning berada di bawah ambang air.</p>
-          <p><b>02</b> Sesuaikan jangkauan dengan luas ruangan.</p>
-          <p><b>03</b> JEDA membekukan sapuan servo.</p>
+          <p><b>02</b> AUTO menyapu 180°; HAND mengunci sudut manual.</p>
+          <p><b>03</b> JEDA / STOP membekukan servo. BUZZER mengikuti ambang air.</p>
         </div>
       </aside>
     </main>
@@ -788,6 +818,9 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     maxRange: 200,
     step: 2,
     paused: false,
+    hand: false,
+    manual: 90,
+    buzzer: true,
     servoAngle: 0,
     targetAngle: 0,
     displayAngle: 0,
@@ -817,12 +850,14 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       var t = parseInt(localStorage.getItem("lacak.threshold"), 10);
       if (!isNaN(t)) S.threshold = Math.min(150, Math.max(10, t));
       S.sound = localStorage.getItem("lacak.sound") === "1";
+      S.buzzer = localStorage.getItem("lacak.buzzer") !== "0";
     }catch(e){}
   }
   function savePrefs(){
     try{
       localStorage.setItem("lacak.threshold", String(S.threshold));
       localStorage.setItem("lacak.sound", S.sound ? "1" : "0");
+      localStorage.setItem("lacak.buzzer", S.buzzer ? "1" : "0");
     }catch(e){}
   }
 
@@ -1323,14 +1358,42 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     updateNote();
   }
   function updateNote(){
-    $("scope-note").innerHTML = "RANGE " + S.maxRange + " CM<br/>STEP " + S.step + "°" + (S.demo ? " · SIMULASI" : "");
+    $("scope-note").innerHTML = "RANGE " + S.maxRange + " CM<br/>STEP " + S.step + "° · " +
+      (S.hand ? "HAND" : "AUTO") + (S.demo ? " · SIMULASI" : "");
+  }
+  function syncThresholdUI(){
+    $("thr").value = S.threshold;
+    $("thr-val").textContent = S.threshold;
+  }
+  function syncManualUI(){
+    $("angle").value = S.manual;
+    $("angle-val").textContent = S.manual;
   }
   function updatePauseUI(){
     var b = $("pause"), l = $("pause-label");
-    if (S.paused){ b.classList.add("active"); l.textContent = "LANJUT"; }
-    else { b.classList.remove("active"); l.textContent = "JEDA"; }
     var st = $("scan-state");
-    if (st) st.textContent = S.paused ? "DIJEDA" : "MENYAPU";
+    if (S.hand){
+      if (S.paused){ b.classList.add("active"); l.textContent = "MULAI"; }
+      else { b.classList.remove("active"); l.textContent = "STOP"; }
+      if (st) st.textContent = S.paused ? "SERVO STOP" : "MANUAL";
+    } else {
+      if (S.paused){ b.classList.add("active"); l.textContent = "LANJUT"; }
+      else { b.classList.remove("active"); l.textContent = "JEDA"; }
+      if (st) st.textContent = S.paused ? "DIJEDA" : "MENYAPU";
+    }
+  }
+  function updateModeUI(){
+    $("mode-auto").classList.toggle("active", !S.hand);
+    $("mode-hand").classList.toggle("active", S.hand);
+    $("angle-wrap").hidden = !S.hand;
+    syncManualUI();
+    updatePauseUI();
+    updateNote();
+  }
+  function updateBuzzerUI(){
+    var b = $("buzzer");
+    b.textContent = "BUZZER: " + (S.buzzer ? "ON" : "OFF");
+    b.classList.toggle("ghost", !S.buzzer);
   }
   function updateSoundUI(){
     var b = $("sound");
@@ -1342,8 +1405,13 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     if (m.cfg){
       if (typeof m.mx === "number") S.maxRange = m.mx;
       if (typeof m.s === "number") S.step = m.s;
+      if (typeof m.hm === "number") S.hand = !!m.hm;
+      if (typeof m.ta === "number") S.manual = clamp(m.ta, 0, 180);
+      if (typeof m.bz === "number") S.buzzer = !!m.bz;
+      if (typeof m.thr === "number") S.threshold = clamp(m.thr, 10, 150);
       S.paused = !!m.p;
-      syncRangeUI(); syncSpeedUI(); updatePauseUI();
+      syncRangeUI(); syncSpeedUI(); syncThresholdUI(); syncManualUI();
+      updateModeUI(); updateBuzzerUI();
       return;
     }
     if (m.st){ updateStatus(m); return; }
@@ -1390,6 +1458,8 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       setLink("ok");
       showOffline(false);
       ping(1250, 0.22, 0.05);
+      send("T" + S.threshold);
+      send("B" + (S.buzzer ? "1" : "0"));
     };
     ws.onmessage = function(ev){
       var m;
@@ -1428,13 +1498,19 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
   ];
   function demoTick(now){
     if (!S.demo || S.paused) return;
-    if (now - demoTickT < 42) return;
-    demoTickT = now;
 
-    var next = demoA + demoDir * S.step;
-    if (next > 180){ next = 360 - next; demoDir = -1; }
-    else if (next < 0){ next = -next; demoDir = 1; }
-    demoA = next;
+    if (S.hand){
+      if (now - demoTickT < 140) return;
+      demoTickT = now;
+      demoA = S.manual;
+    } else {
+      if (now - demoTickT < 42) return;
+      demoTickT = now;
+      var next = demoA + demoDir * S.step;
+      if (next > 180){ next = 360 - next; demoDir = -1; }
+      else if (next < 0){ next = -next; demoDir = 1; }
+      demoA = next;
+    }
 
     var d = 0;
     for (var i = 0; i < demoTargets.length; i++){
@@ -1835,7 +1911,8 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     if (water && !S.wasWater) ping(1040, 0.30, 0.11);
     S.wasWater = water;
 
-    $("scope-badge").textContent = "PPI · 180°" + (S.demo ? " · DEMO" : (S.paused ? " · JEDA" : ""));
+    $("scope-badge").textContent = "PPI · " + (S.hand ? "HAND" : "180°") +
+      (S.demo ? " · DEMO" : (S.paused ? (S.hand ? " · STOP" : " · JEDA") : ""));
     drawHistory();
   }
 
@@ -1854,7 +1931,8 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     var rangeEl = $("range");
     var thrEl = $("thr");
     var speedEl = $("speed");
-    var rangeTimer = null;
+    var angleEl = $("angle");
+    var rangeTimer = null, thrTimer = null, angleTimer = null;
 
     rangeEl.value = S.maxRange;
     $("range-val").textContent = S.maxRange;
@@ -1872,6 +1950,8 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       S.threshold = clamp(parseInt(thrEl.value, 10) || 50, 10, 150);
       $("thr-val").textContent = S.threshold;
       savePrefs();
+      clearTimeout(thrTimer);
+      thrTimer = setTimeout(function(){ send("T" + S.threshold); }, 90);
     });
 
     speedEl.value = S.step;
@@ -1883,11 +1963,47 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       send("S" + S.step);
     });
 
+    angleEl.value = S.manual;
+    $("angle-val").textContent = S.manual;
+    angleEl.addEventListener("input", function(){
+      S.manual = clamp(parseInt(angleEl.value, 10) || 90, 0, 180);
+      $("angle-val").textContent = S.manual;
+      clearTimeout(angleTimer);
+      angleTimer = setTimeout(function(){ send("A" + S.manual); }, 60);
+    });
+
+    $("mode-auto").addEventListener("click", function(){
+      S.hand = false;
+      S.paused = false;
+      updateModeUI();
+      send("M0");
+      toast("MODE AUTO - SAPUAN 180°");
+    });
+
+    $("mode-hand").addEventListener("click", function(){
+      S.hand = true;
+      S.paused = false;
+      S.manual = Math.round(S.servoAngle || S.manual);
+      updateModeUI();
+      send("M1");
+      toast("MODE HAND - ATUR SUDUT MANUAL");
+    });
+
     $("pause").addEventListener("click", function(){
       S.paused = !S.paused;
       updatePauseUI();
       send("P" + (S.paused ? "1" : "0"));
-      toast(S.paused ? "SAPUAN DIJEDA" : "SAPUAN DILANJUTKAN");
+      toast(S.hand
+        ? (S.paused ? "SERVO STOP" : "SERVO MULAI")
+        : (S.paused ? "SAPUAN DIJEDA" : "SAPUAN DILANJUTKAN"));
+    });
+
+    $("buzzer").addEventListener("click", function(){
+      S.buzzer = !S.buzzer;
+      updateBuzzerUI();
+      savePrefs();
+      send("B" + (S.buzzer ? "1" : "0"));
+      toast(S.buzzer ? "BUZZER ON" : "BUZZER OFF");
     });
 
     $("sound").addEventListener("click", function(){
@@ -1918,7 +2034,8 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     loadPrefs();
     bindUI();
     bindConfigUI();
-    updatePauseUI();
+    updateModeUI();
+    updateBuzzerUI();
     updateSoundUI();
     updateNote();
     setLink(DEMO ? "demo" : "connecting");

@@ -24,6 +24,8 @@ backdrop and header logo (served as `web/logo.jpg`).
 - “AIR TERDETEKSI” water/contact alert with an adjustable threshold (10–150 cm)
 - Live echo-history graph, nearest contact, last echo and ping counter
 - Range (40–400 cm), scan speed (1–5°) and pause controls from the browser
+- **AUTO / HAND servo modes** — AUTO sweeps 180°; HAND holds a manual angle with start/stop and speed control
+- **Buzzer output on GPIO 23** — beeps when a contact is within the adjustable water threshold (enable/disable in the web UI)
 - **AP + STA at the same time** — the hotspot stays available while the ESP32
   also joins a 2.4 GHz home WiFi network
 - **CONFIG tab** — WiFi scan, STA/AP credentials, hostname and factory reset,
@@ -60,8 +62,9 @@ backdrop and header logo (served as `web/logo.jpg`).
 |---|---|
 | ESP32 DevKit (ESP32-D / WROOM-32) | 4 MB flash recommended |
 | HC-SR04 ultrasonic sensor | **not waterproof** |
-| SG90 / MG90S servo | 180° type |
-| 5 V ≥ 1 A power supply | separate supply for the servo is strongly recommended |
+| MG995 / SG90 servo | 180° type; MG995 needs a stronger supply |
+| Active buzzer (or passive with `BUZZER_ACTIVE 0`) | output on GPIO 23 |
+| 5 V ≥ 2–3 A power supply | separate supply for the MG995 is strongly recommended |
 | 1 kΩ + 2 kΩ resistors | voltage divider for the HC-SR04 ECHO pin |
 | 470–1000 µF electrolytic capacitor | across the servo supply (avoids brownouts) |
 | Jumper wires, servo bracket | mount the sensor on the servo horn |
@@ -80,10 +83,14 @@ HC-SR04                                ESP32
                    │
                   GND
 
-SG90
-  red    (+) ─────── +5V external (1 A), 470 µF to GND
+MG995
+  red    (+) ─────── +5–6V external (2–3 A), 470–1000 µF to GND
   brown  (−) ─────── GND (common with ESP32)
   orange (SIG) ───── GPIO 19
+
+Buzzer (active, HIGH = sound)
+  +  ─────────────── GPIO 23
+  −  ─────────────── GND
 
 Optional Nextion (UART2, 115200 baud):
   Nextion 5V  ─────── 5V
@@ -390,6 +397,19 @@ python tools/remove_bg.py photos/ cutouts/ --trim
 
 The first run downloads the U2Net model (about 176 MB).
 
+### Auto / Hand / Buzzer
+
+The web UI has two servo modes:
+
+- **AUTO** — the servo sweeps 0–180° continuously. `JEDA` pauses/resumes.
+- **HAND** — the servo holds a manual angle. Drag **SUDUT MANUAL** to move it;
+  `STOP` / `MULAI` starts and stops the servo, and **KECEPATAN** sets how many
+  degrees it moves per step (1–5°).
+
+The **BUZZER** button enables/disables the local alarm on **GPIO 23**. It beeps
+when a measured contact is within the **AMBANG AIR** threshold (10–150 cm),
+which is also sent to the ESP32. The beep gets faster below 20 cm.
+
 ### Tuning
 
 In `firmware/ESP32_Radar/ESP32_Radar.ino`:
@@ -412,9 +432,14 @@ In `firmware/ESP32_Radar/ESP32_Radar.ino`:
 
 ### Pins
 
-Default pins are `TRIG 5`, `ECHO 18`, `SERVO 19`. If your board has trouble
-booting, move TRIG away from GPIO 5 (a strapping pin) to GPIO 4, and update the
-`#define`s.
+Default pins are `TRIG 5`, `ECHO 18`, `SERVO 19`, `BUZZER 23`. If your board has
+trouble booting, move TRIG away from GPIO 5 (a strapping pin) to GPIO 4, and
+update the `#define`s.
+
+For a passive buzzer set `BUZZER_ACTIVE 0` in `ESP32_Radar.ino`; the firmware
+then drives it with `tone()` at `BUZZER_TONE_HZ`. For a buzzer that draws more
+than about 20 mA, drive it through an NPN transistor/MOSFET instead of the GPIO
+directly.
 
 ## Troubleshooting
 
@@ -423,6 +448,8 @@ booting, move TRIG away from GPIO 5 (a strapping pin) to GPIO 4, and update the
 | Page loads, LINK stays **TERPUTUS** | WebSocket port 81 blocked; phone on a different network/VLAN; router client isolation. Open `http://<ip>/` directly. |
 | Readings always 0 cm | ECHO divider/wiring, sensor on 5 V, TRIG/ECHO pins, object within range and roughly perpendicular. |
 | Servo jitters, ESP32 reboots or WiFi drops | Servo is drawing too much power. Use a separate 5 V supply + 470 µF capacitor + common ground. |
+| Hand mode does not move | `STOP` is active; press `MULAI`, then move the **SUDUT MANUAL** slider. |
+| Buzzer never sounds | GPIO 23 wiring, active/passive setting (`BUZZER_ACTIVE`), `BUZZER: ON` in the web UI, and a contact inside **AMBANG AIR**. |
 | ESP32 boot loop | GPIO 5 strapping pin, power supply, or a short. Try TRIG on GPIO 4. |
 | WiFi (STA) never connects, hotspot still works | ESP32 supports only 2.4 GHz networks; check SSID/password in CONFIG. The AP remains available so you can fix it. |
 | STA IP shows **—** | Wrong password, 5 GHz SSID, or the router blocks new clients. Use the CONFIG tab or serial log. |
@@ -454,10 +481,10 @@ booting, move TRIG away from GPIO 5 (a strapping pin) to GPIO 4, and update the
 
 - **Arduino IDE / arduino-cli** — ESP32 core **3.3.12**, ESP32Servo **3.2.1**,
   WebSockets **2.7.2**, partition scheme `min_spiffs` (1.9 MB OTA slot):
-  **1,150,750 bytes (58%) flash**, **55,096 bytes (16%) RAM**
+  **1,155,722 bytes (58%) flash**, **55,112 bytes (16%) RAM**
 - **PlatformIO Core 6.2.0** — `espressif32@7.0.1` (Arduino core 2.0.17),
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
-  **986,881 bytes (50.2%) flash**, **52,464 bytes (16.0%) RAM**
+  **991,833 bytes (50.4%) flash**, **52,488 bytes (16.0%) RAM**
 - **Nextion** — nxwright 0.2.5 + Nextion Editor 1.68.2 firmware →
   `nextion/NX3224T028.tft` (**846,708 bytes**); page RAM 256 + 504 + 36 of 3584
   bytes

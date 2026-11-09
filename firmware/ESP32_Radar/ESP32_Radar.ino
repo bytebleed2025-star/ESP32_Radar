@@ -21,6 +21,8 @@
  *    SG90     +    -> external 5V (1A) + 470uF capacitor recommended
  *             GND  -> common GND with ESP32
  *             SIG  -> GPIO 19
+ *    Buzzer   +    -> GPIO 23 (active buzzer; set BUZZER_ACTIVE 0 for passive)
+ *             -    -> GND
  *
  *  Libraries (Arduino IDE -> Library Manager)
  *  ------------------------------------------
@@ -90,6 +92,11 @@ const char *OTA_PASSWORD = "lacakota";
 #define PIN_TRIG   5
 #define PIN_ECHO  18
 #define PIN_SERVO 19
+#define PIN_BUZZER 23       // active buzzer output
+
+// 1 = active buzzer (HIGH = sound), 0 = passive buzzer (tone)
+#define BUZZER_ACTIVE 1
+#define BUZZER_TONE_HZ 2200
 
 // SG90 safe mechanical limits. The UI always reports logical 0..180 degrees.
 #define SERVO_LEFT   12
@@ -119,11 +126,22 @@ static String g_staSsid, g_staPass, g_apSsid, g_apPass, g_hostname;
 static bool g_apStarted      = false;
 static bool g_staWasConnected = false;
 static bool g_paused         = false;
+static bool g_handMode       = false;
+static int  g_manualTarget   = 90;
+static int  g_alertCm        = 50;
+static bool g_buzzerEnabled  = true;
+static bool g_buzzerLevel    = false;
+static unsigned long g_lastNearMs   = 0;
+static unsigned long g_buzzerToggleMs = 0;
+static unsigned long g_lastHandPingMs = 0;
+static int  g_lastMeasurement = 0;
 static int  g_angle          = 0;
 static int  g_direction      = 1;
 static unsigned long g_lastStepMs   = 0;
 static unsigned long g_lastStatusMs = 0;
 static unsigned long g_lastStaAttempt = 0;
+
+static void buzzerWrite(bool on);
 
 static bool g_otaActive = false;
 static bool g_otaOk     = false;
@@ -332,10 +350,14 @@ static void loopNetwork() {
  * ------------------------------------------------------------------------ */
 
 static void sendConfig(uint8_t num) {
-  char buf[96];
+  char buf[128];
   int n = snprintf(buf, sizeof(buf),
-                   "{\"cfg\":1,\"mx\":%d,\"s\":%u,\"p\":%u}",
-                   maxRangeCm, (unsigned)stepDeg, g_paused ? 1u : 0u);
+                   "{\"cfg\":1,\"mx\":%d,\"s\":%u,\"p\":%u,\"hm\":%u,"
+                   "\"ta\":%d,\"bz\":%u,\"thr\":%d}",
+                   maxRangeCm, (unsigned)stepDeg, g_paused ? 1u : 0u,
+                   g_handMode ? 1u : 0u,
+                   g_handMode ? g_manualTarget : g_angle,
+                   g_buzzerEnabled ? 1u : 0u, g_alertCm);
   if (num == 255) webSocket.broadcastTXT(buf, n);
   else            webSocket.sendTXT(num, buf, n);
 
@@ -408,9 +430,42 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
           sendConfig(255);
           break;
 
-        case 'P':                       // "P1" pause / "P0" resume
+        case 'P':                       // "P1" stop / "P0" start
           g_paused = (atoi(msg + 1) != 0);
           servo.write(servoPosFor(g_angle));
+          sendConfig(255);
+          break;
+
+        case 'M':                       // "M0" auto / "M1" hand
+          g_handMode = (atoi(msg + 1) != 0);
+          g_paused = false;
+          g_lastHandPingMs = 0;
+          if (g_handMode) {
+            g_manualTarget = g_angle;
+          } else {
+            g_direction = 1;
+          }
+          sendConfig(255);
+          break;
+
+        case 'A':                       // "A120" manual target angle
+          g_handMode = true;
+          g_manualTarget = constrain(atoi(msg + 1), 0, 180);
+          g_paused = false;
+          sendConfig(255);
+          break;
+
+        case 'B':                       // "B1" buzzer on / "B0" off
+          g_buzzerEnabled = (atoi(msg + 1) != 0);
+          if (!g_buzzerEnabled) {
+            g_buzzerLevel = false;
+            buzzerWrite(false);
+          }
+          sendConfig(255);
+          break;
+
+        case 'T':                       // "T50" alert/buzzer threshold in cm
+          g_alertCm = constrain(atoi(msg + 1), 10, 150);
           sendConfig(255);
           break;
 
@@ -708,13 +763,46 @@ static void startOta() {
  *  SCAN
  * ------------------------------------------------------------------------ */
 
-static void takeStep() {
-  servo.write(servoPosFor(g_angle));
-  delay(STEP_SETTLE_MS);
+static void buzzerWrite(bool on) {
+#if BUZZER_ACTIVE
+  digitalWrite(PIN_BUZZER, on ? HIGH : LOW);
+#else
+  if (on) tone(PIN_BUZZER, BUZZER_TONE_HZ);
+  else    noTone(PIN_BUZZER);
+#endif
+}
 
+static void updateBuzzer(uint32_t now) {
+  bool near = g_lastNearMs != 0 &&
+              (uint32_t)(now - g_lastNearMs) < 1500UL;
+  bool active = g_buzzerEnabled && near;
+
+  if (!active) {
+    if (g_buzzerLevel) {
+      g_buzzerLevel = false;
+      buzzerWrite(false);
+    }
+    return;
+  }
+
+  // Faster beep when the object is very close.
+  uint32_t period = (g_lastMeasurement > 0 && g_lastMeasurement <= 20) ? 90UL : 170UL;
+  if ((uint32_t)(now - g_buzzerToggleMs) >= period) {
+    g_buzzerToggleMs = now;
+    g_buzzerLevel = !g_buzzerLevel;
+    buzzerWrite(g_buzzerLevel);
+  }
+}
+
+static void measureAtCurrent() {
   int distance = 0;
   float cm = pingCm();
   if (cm > 0.0f) distance = (int)(cm + 0.5f);
+
+  g_lastMeasurement = distance;
+  if (distance > 0 && distance <= g_alertCm) {
+    g_lastNearMs = millis();
+  }
 
   NextionUI::addReading(g_angle, distance);
 
@@ -722,6 +810,33 @@ static void takeStep() {
   int n = snprintf(buf, sizeof(buf), "{\"a\":%d,\"d\":%d,\"mx\":%d}",
                    g_angle, distance, maxRangeCm);
   webSocket.broadcastTXT(buf, n);
+}
+
+static void takeStep() {
+  if (g_handMode) {
+    int target = constrain(g_manualTarget, 0, 180);
+    int delta  = target - g_angle;
+
+    if (delta != 0) {
+      int move = constrain(delta, -(int)stepDeg, (int)stepDeg);
+      g_angle += move;
+      servo.write(servoPosFor(g_angle));
+      delay(STEP_SETTLE_MS);
+      measureAtCurrent();
+      g_lastHandPingMs = millis();
+    } else if (g_lastHandPingMs == 0 ||
+               (uint32_t)(millis() - g_lastHandPingMs) >= 500UL) {
+      // At the target: keep the distance readout fresh.
+      servo.write(servoPosFor(g_angle));
+      measureAtCurrent();
+      g_lastHandPingMs = millis();
+    }
+    return;
+  }
+
+  servo.write(servoPosFor(g_angle));
+  delay(STEP_SETTLE_MS);
+  measureAtCurrent();
 
   g_angle += g_direction * (int)stepDeg;
   if (g_angle > 180) { g_angle = 360 - g_angle; g_direction = -1; }
@@ -744,6 +859,9 @@ void setup() {
   pinMode(PIN_TRIG, OUTPUT);
   pinMode(PIN_ECHO, INPUT);
   digitalWrite(PIN_TRIG, LOW);
+
+  pinMode(PIN_BUZZER, OUTPUT);
+  digitalWrite(PIN_BUZZER, LOW);
 
   servo.setPeriodHertz(50);
   servo.attach(PIN_SERVO, 500, 2400);
@@ -833,6 +951,8 @@ void loop() {
   loopNetwork();
 
   unsigned long now = millis();
+
+  updateBuzzer(now);
 
   if (!g_otaActive && !g_paused && now - g_lastStepMs >= STEP_INTERVAL_MS) {
     g_lastStepMs = now;

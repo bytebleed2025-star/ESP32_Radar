@@ -307,6 +307,9 @@ Change the following in `nextion_ui.h` if needed:
   the web UI receives a `cfg` broadcast and stays in sync.
 - The radar page is drawn for the last 12 contacts in an ~8 s window.
 - Both UIs can be used at the same time.
+- The Nextion `JEDA` button toggles pause/stop in both AUTO and HAND modes.
+  AUTO/HAND selection, the manual angle and the buzzer are currently web-only;
+  they can be added to the HMI later.
 
 ---
 
