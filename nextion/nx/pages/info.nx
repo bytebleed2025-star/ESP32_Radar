@@ -1,0 +1,15 @@
+on bBack.up:
+  prints "NX:BACK\r",0
+  page radar
+
+on bR100.up:
+  prints "NX:R100\r",0
+
+on bR200.up:
+  prints "NX:R200\r",0
+
+on bR300.up:
+  prints "NX:R300\r",0
+
+on bPause.up:
+  prints "NX:PAUSE\r",0

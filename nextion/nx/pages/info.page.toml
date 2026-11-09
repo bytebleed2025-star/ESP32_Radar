@@ -1,0 +1,369 @@
+[page]
+name = "info"
+type = "page"
+x = 0
+y = 0
+w = 320
+h = 240
+sta = 1
+bco = "#020906"
+
+[[component]]
+name = "tTitle2"
+type = "text"
+x = 8
+y = 0
+w = 220
+h = 24
+sta = 1
+bco = "#020906"
+pco = "#D9FFE9"
+font = "SansBold24"
+xcen = 0
+ycen = 1
+txt = "INFO / KONTROL"
+txt_maxl = 20
+
+[[component]]
+name = "tBackBtn"
+type = "text"
+x = 258
+y = 0
+w = 54
+h = 24
+sta = 1
+bco = "#06170D"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "BACK"
+txt_maxl = 6
+
+[[component]]
+name = "tModeLbl"
+type = "text"
+x = 10
+y = 30
+w = 90
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#1E7A4C"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "MODE"
+txt_maxl = 10
+
+[[component]]
+name = "tMode"
+type = "text"
+x = 108
+y = 30
+w = 202
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#D9FFE9"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "AP"
+txt_maxl = 10
+
+[[component]]
+name = "tApLbl"
+type = "text"
+x = 10
+y = 50
+w = 90
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#1E7A4C"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "AP IP"
+txt_maxl = 10
+
+[[component]]
+name = "tApIp"
+type = "text"
+x = 108
+y = 50
+w = 202
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#D9FFE9"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "192.168.4.1"
+txt_maxl = 16
+
+[[component]]
+name = "tStaLbl"
+type = "text"
+x = 10
+y = 70
+w = 90
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#1E7A4C"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "STA IP"
+txt_maxl = 10
+
+[[component]]
+name = "tStaIp"
+type = "text"
+x = 108
+y = 70
+w = 202
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#D9FFE9"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "-"
+txt_maxl = 16
+
+[[component]]
+name = "tRssiLbl"
+type = "text"
+x = 10
+y = 90
+w = 90
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#1E7A4C"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "SIGNAL"
+txt_maxl = 10
+
+[[component]]
+name = "tRssi"
+type = "text"
+x = 108
+y = 90
+w = 202
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#D9FFE9"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "-"
+txt_maxl = 12
+
+[[component]]
+name = "tUpLbl"
+type = "text"
+x = 10
+y = 110
+w = 90
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#1E7A4C"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "UPTIME"
+txt_maxl = 10
+
+[[component]]
+name = "tUp"
+type = "text"
+x = 108
+y = 110
+w = 202
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#D9FFE9"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "00:00:00"
+txt_maxl = 10
+
+[[component]]
+name = "tFwLbl"
+type = "text"
+x = 10
+y = 130
+w = 90
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#1E7A4C"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "FIRMWARE"
+txt_maxl = 10
+
+[[component]]
+name = "tFw"
+type = "text"
+x = 108
+y = 130
+w = 202
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#D9FFE9"
+font = "Sans16"
+xcen = 0
+ycen = 1
+txt = "1.1.0"
+txt_maxl = 10
+
+[[component]]
+name = "t100Btn"
+type = "text"
+x = 8
+y = 160
+w = 70
+h = 28
+sta = 1
+bco = "#06170D"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "100"
+txt_maxl = 6
+
+[[component]]
+name = "t200Btn"
+type = "text"
+x = 86
+y = 160
+w = 70
+h = 28
+sta = 1
+bco = "#06170D"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "200"
+txt_maxl = 6
+
+[[component]]
+name = "t300Btn"
+type = "text"
+x = 164
+y = 160
+w = 70
+h = 28
+sta = 1
+bco = "#06170D"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "300"
+txt_maxl = 6
+
+[[component]]
+name = "tPauseBtn"
+type = "text"
+x = 242
+y = 160
+w = 70
+h = 28
+sta = 1
+bco = "#06170D"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "JEDA"
+txt_maxl = 10
+
+[[component]]
+name = "tRange"
+type = "text"
+x = 8
+y = 196
+w = 304
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "RANGE: 200 cm"
+txt_maxl = 16
+
+[[component]]
+name = "tNote"
+type = "text"
+x = 8
+y = 218
+w = 304
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#1E7A4C"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "Nextion + web UI aktif"
+txt_maxl = 32
+
+[[component]]
+name = "bBack"
+type = "hotspot"
+x = 258
+y = 0
+w = 54
+h = 24
+
+[[component]]
+name = "bR100"
+type = "hotspot"
+x = 8
+y = 160
+w = 70
+h = 28
+
+[[component]]
+name = "bR200"
+type = "hotspot"
+x = 86
+y = 160
+w = 70
+h = 28
+
+[[component]]
+name = "bR300"
+type = "hotspot"
+x = 164
+y = 160
+w = 70
+h = 28
+
+[[component]]
+name = "bPause"
+type = "hotspot"
+x = 242
+y = 160
+w = 70
+h = 28

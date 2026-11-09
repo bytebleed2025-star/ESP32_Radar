@@ -6,3 +6,6 @@
 # Arduino / editors
 .vscode/
 *.tmp
+
+# Nextion build artifacts (source is in nextion/nx, TFT is kept)
+nextion/*.HMI

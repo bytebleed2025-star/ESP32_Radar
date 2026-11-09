@@ -1,0 +1,4 @@
+// DETEKTOR AIR LACAK - Nextion startup
+baud=115200
+dim=90
+page radar

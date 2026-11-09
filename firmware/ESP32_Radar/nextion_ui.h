@@ -100,7 +100,6 @@ static bool     g_paused     = false;
 
 static uint32_t g_nextDrawMs = 0;
 static uint32_t g_nextTextMs = 0;
-static uint32_t g_nextSyncMs = 0;
 
 static int      g_lastShownAngle = -1;
 static int      g_lastShownDist  = -1;
@@ -110,6 +109,8 @@ static bool     g_alertDirty     = true;   // force initial alert refresh
 
 static uint8_t  g_rxBuf[8];
 static uint8_t  g_rxLen = 0;
+static char     g_lineBuf[32];
+static uint8_t  g_lineLen = 0;
 static int      g_lastTouchComp = -1;
 static uint32_t g_lastTouchMs = 0;
 
@@ -261,7 +262,7 @@ static void updateInfoText() {
   cmd("tUp.txt=\"" + upString(g_up) + "\"");
   cmd("tFw.txt=\"" + g_fw + "\"");
   cmd("tRange.txt=\"" + String(g_maxRange) + " cm\"");
-  cmd("bPause.txt=\"" + String(g_paused ? "LANJUT" : "JEDA") + "\"");
+  cmd("tPauseBtn.txt=\"" + String(g_paused ? "LANJUT" : "JEDA") + "\"");
 }
 
 // ---------------------------------------------------------------------------
@@ -322,12 +323,58 @@ static void handleTouch(uint8_t page, uint8_t comp, uint8_t event) {
   }
 }
 
+static void handleTextCommand(const char *line) {
+  Serial.printf("[NX] cmd %s\n", line);
+
+  if (strcmp(line, "NX:INFO") == 0) {
+    g_page = NX_PAGE_INFO;
+    g_nextTextMs = 0;
+    g_nextDrawMs = 0;
+  } else if (strcmp(line, "NX:BACK") == 0) {
+    g_page = NX_PAGE_RADAR;
+    g_lastShownAngle = -1;
+    g_lastShownDist  = -1;
+    g_lastShownNear  = -1;
+    g_alertDirty     = true;
+    g_nextTextMs = 0;
+    g_nextDrawMs = 0;
+  } else if (strcmp(line, "NX:R100") == 0) {
+    if (g_onRange) g_onRange(100);
+  } else if (strcmp(line, "NX:R200") == 0) {
+    if (g_onRange) g_onRange(200);
+  } else if (strcmp(line, "NX:R300") == 0) {
+    if (g_onRange) g_onRange(300);
+  } else if (strcmp(line, "NX:PAUSE") == 0) {
+    if (g_onPause) g_onPause();
+  }
+}
+
 static void pollSerial() {
   while (NxSerial.available()) {
     uint8_t b = (uint8_t)NxSerial.read();
 
     if (g_rxLen == 0) {
-      if (b == 0x65 || b == 0x66) g_rxBuf[g_rxLen++] = b;
+      if (b == 0x65 || b == 0x66) {
+        g_rxBuf[g_rxLen++] = b;
+        g_lineLen = 0;
+        continue;
+      }
+      if (b == '\r' || b == '\n') {
+        if (g_lineLen > 0) {
+          g_lineBuf[g_lineLen] = '\0';
+          handleTextCommand(g_lineBuf);
+          g_lineLen = 0;
+        }
+        continue;
+      }
+      if (b >= 32 && b < 127) {
+        if (g_lineLen < sizeof(g_lineBuf) - 1) {
+          g_lineBuf[g_lineLen++] = (char)b;
+        }
+        continue;
+      }
+      // Command return bytes / noise: do not let them join the next line.
+      g_lineLen = 0;
       continue;
     }
 
@@ -381,7 +428,6 @@ inline void begin() {
   g_ready = true;
   g_nextDrawMs = 0;
   g_nextTextMs = 0;
-  g_nextSyncMs = millis();
 
   Serial.printf("[NX] Nextion ready: %lu baud, RX=%d TX=%d\n",
                 (unsigned long)NX_BAUD, NX_RX_PIN, NX_TX_PIN);
@@ -422,12 +468,6 @@ inline void loop() {
   pollSerial();
 
   uint32_t now = millis();
-
-  // Keep the page state in sync even if the HMI changes page locally.
-  if ((uint32_t)(now - g_nextSyncMs) > 5000UL) {
-    g_nextSyncMs = now;
-    cmd("sendme");
-  }
 
   if (g_page == NX_PAGE_RADAR) {
     if ((int32_t)(now - g_nextDrawMs) >= 0) {

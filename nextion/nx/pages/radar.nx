@@ -1,0 +1,3 @@
+on bInfo.up:
+  prints "NX:INFO\r",0
+  page info

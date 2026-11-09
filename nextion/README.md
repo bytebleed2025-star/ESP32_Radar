@@ -13,9 +13,57 @@ These are **preview renders**, not screenshots of a flashed display. The
 combined device view is [`render/preview.png`](render/preview.png), and the
 HTML renderer is [`render/render.html`](render/render.html).
 
-Build the actual pages in **Nextion Editor** using the tables below. The
-rendered look uses glow/scanlines for presentation; the real HMI should use
-flat colours and simple Nextion fonts.
+## Prebuilt HMI (included)
+
+The ready-to-flash screen project is included:
+
+- **`nextion/NX3224T028.tft`** — flash this to the display
+- **`nextion/DetektorAir.HMI`** — open this in Nextion Editor (build artifact)
+- **`nextion/nx/`** — text source for the same project (nxwright)
+
+The TFT was built with **Nextion Editor 1.68.2’s firmware** for the
+**NX3224T028**, rotation **90°** (320×240 landscape), baud **115200**.
+The compiled app uses ~750 bytes of the 3584 bytes of page RAM and the TFT is
+about **368 KB**.
+
+The prebuilt HMI uses **hotspots + text tiles**, not component-ID buttons. Its
+hotspots send short serial commands:
+
+```text
+NX:INFO   NX:BACK   NX:R100   NX:R200   NX:R300   NX:PAUSE
+```
+
+The ESP32 parses them; no “Send Component ID” setup is needed.
+
+### Flash with microSD
+
+1. Format a microSD card as **FAT32**.
+2. Copy `NX3224T028.tft` to the card’s root.
+3. Power the Nextion off, insert the card, power it on.
+4. Wait for the update to finish, remove the card, and power-cycle.
+
+### Flash with Nextion Editor
+
+Open `nextion/DetektorAir.HMI` in Nextion Editor, connect the display with a
+USB-TTL adapter, and use the upload function. The TFT can also be sent with
+`nxwright upload nextion/NX3224T028.tft COMx`.
+
+### Rebuild the TFT
+
+The text source lives in `nextion/nx`. With nxwright installed:
+
+```bash
+nxwright check nextion/nx
+nxwright compile nextion/nx nextion/NX3224T028.tft \
+  --editor "C:\Program Files (x86)\Nextion Editor"
+```
+
+Use `--download` instead of `--editor` to fetch the base firmware from
+Nextion’s site.
+
+> The tables below are for a **custom** Nextion Editor build, using component
+> IDs. The included prebuilt HMI uses the text-command hotspots described
+> above. The ESP32 firmware supports both.
 
 ---
 
@@ -30,8 +78,9 @@ flat colours and simple Nextion fonts.
     ESP32 using `fill` / `cir` / `line` / `cirs` primitives
 
 - Page 1 (`info`) shows network status and **range / pause** buttons.
-- Touch is reported with component IDs. The ESP32 switches pages and applies
-  range/pause changes; changes are also broadcast to the web UI.
+- The prebuilt HMI reports touches with short text commands (`NX:INFO`, etc.).
+  Custom HMIs may also use component IDs. The ESP32 applies range/pause
+  changes and broadcasts them to the web UI.
 - The Nextion radar is updated at ~5 FPS and the readouts at 4 FPS. This is a
   hardware/serial limit of the Nextion, not the web UI.
 
@@ -147,13 +196,13 @@ Nextion GND ────────────────────── G
 | Button | `bR100` | 8 | 160 | 70 | 28 | `100`, **ID 2** |
 | Button | `bR200` | 86 | 160 | 70 | 28 | `200`, **ID 3** |
 | Button | `bR300` | 164 | 160 | 70 | 28 | `300`, **ID 4** |
-| Button | `bPause` | 242 | 160 | 70 | 28 | `JEDA`, **ID 5** |
+| Button | `tPauseBtn` | 242 | 160 | 70 | 28 | `JEDA`, **ID 5** |
 | Text | `tRange` | 8 | 196 | 304 | 16 | `200 cm`, font 0, green, centered, `txt_maxl` 12 |
 | Text | `tNote` | 8 | 218 | 304 | 16 | `Nextion + web UI aktif`, font 0, dim, `txt_maxl` 32 |
 
 - The four buttons must have **Send Component ID** enabled on the **Touch
   Release Event**. Do not add a local `page` action; the ESP32 controls pages.
-- The firmware changes `bPause.txt` to `JEDA` / `LANJUT` and updates `tRange`.
+- The firmware changes `tPauseBtn.txt` to `JEDA` / `LANJUT` and updates `tRange`.
 - Values are written by the ESP32; the labels are static.
 
 ### 3.4 Touch component IDs
@@ -167,7 +216,7 @@ The ESP32 reacts to these IDs (defined in `nextion_ui.h`):
 | 1 | `bR100` | 2 |
 | 1 | `bR200` | 3 |
 | 1 | `bR300` | 4 |
-| 1 | `bPause` | 5 |
+| 1 | `tPauseBtn` | 5 |
 
 The editor may assign different IDs depending on the order you create
 components. Verify them:
@@ -234,8 +283,11 @@ Normal serial output after boot:
 ```text
 [NX] Nextion ready: 115200 baud, RX=16 TX=17
 ...
-[NX] touch page=0 comp=1 event=0
+[NX] cmd NX:INFO
+[NX] cmd NX:R200
 ```
+
+Custom component-ID HMIs additionally print `[NX] touch page=... comp=...`.
 
 - Page 0 should show the radar and numbers immediately.
 - Press INFO → page 1. Press 100/200/300 → the radar range changes and the web
@@ -254,12 +306,13 @@ If you see values but no radar, check the radar area is empty in the HMI (the
 |---|---|
 | Display white/blank | 5 V power, common ground, HMI flashed, baud 115200. |
 | No text updates | Baud mismatch (9600 vs 115200), wrong object names, page 0 not loaded, `txt_maxl` too small. |
-| Touch does nothing | **Send Component ID** not checked; wrong component ID; TX/RX swapped; level divider. |
-| Buttons work but page doesn’t change | The button must send its ID; do not use a local page action. The ESP32 sends `page 0/1`. |
-| Radar draws over the Info page | A local page switch was added in the HMI; remove it. The firmware resyncs with `sendme` every 5 s but should control the page. |
+| Touch does nothing (prebuilt HMI) | Baud 115200, HMI flashed, Nextion TX divider, and check for `[NX] cmd ...` in the serial log. |
+| Touch does nothing (custom HMI) | **Send Component ID** not checked; wrong component ID; TX/RX swapped; level divider. |
+| Buttons work but page doesn’t change | Prebuilt: the page code’s `page` line; custom: the button must send its ID. |
+| Radar draws over the Info page | Prebuilt: the hotspot `prints`/`page` code must run. Custom: ensure page switches are reported to the firmware. |
 | ESP32 reboots when display connected | 5 V supply too weak; add capacitor; common ground; level shifter. |
 | Garbled Nextion screen | Baud mismatch or bad ground; set both sides to 115200. |
-| Touch IDs don’t match the table | Read the `[NX] touch ...` log and edit `NX_ID_*`. |
+| Touch IDs don’t match the table (custom HMI) | Read the `[NX] touch ...` log and edit `NX_ID_*`. The prebuilt HMI does not use component IDs. |
 | Updates are slow | Nextion drawing/serial limit; keep the 2.8″ Basic at 115200, expect ~5 FPS radar. |
 | Web UI still works without Nextion | Yes — set `NEXTION_ENABLED 0` to disable UART2 if unused. |
 

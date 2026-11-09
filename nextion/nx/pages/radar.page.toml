@@ -1,0 +1,161 @@
+[page]
+name = "radar"
+type = "page"
+x = 0
+y = 0
+w = 320
+h = 240
+sta = 1
+bco = "#020906"
+
+[[component]]
+name = "tTitle"
+type = "text"
+x = 8
+y = 0
+w = 220
+h = 24
+sta = 1
+bco = "#020906"
+pco = "#D9FFE9"
+font = "SansBold24"
+xcen = 0
+ycen = 1
+txt = "DETEKTOR AIR"
+txt_maxl = 20
+
+[[component]]
+name = "tInfoBtn"
+type = "text"
+x = 258
+y = 0
+w = 54
+h = 24
+sta = 1
+bco = "#06170D"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "INFO"
+txt_maxl = 6
+
+[[component]]
+name = "tDistLbl"
+type = "text"
+x = 8
+y = 26
+w = 90
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#1E7A4C"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "DIST"
+txt_maxl = 8
+
+[[component]]
+name = "tAngleLbl"
+type = "text"
+x = 116
+y = 26
+w = 90
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#1E7A4C"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "ANGLE"
+txt_maxl = 8
+
+[[component]]
+name = "tNearLbl"
+type = "text"
+x = 224
+y = 26
+w = 88
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#1E7A4C"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "NEAR"
+txt_maxl = 8
+
+[[component]]
+name = "nDist"
+type = "number"
+x = 8
+y = 42
+w = 90
+h = 24
+sta = 1
+bco = "#020906"
+pco = "#D9FFE9"
+font = "SansBold24"
+xcen = 1
+ycen = 1
+val = 0
+lenth = 0
+
+[[component]]
+name = "nAngle"
+type = "number"
+x = 116
+y = 42
+w = 90
+h = 24
+sta = 1
+bco = "#020906"
+pco = "#D9FFE9"
+font = "SansBold24"
+xcen = 1
+ycen = 1
+val = 0
+lenth = 0
+
+[[component]]
+name = "nNear"
+type = "number"
+x = 224
+y = 42
+w = 88
+h = 24
+sta = 1
+bco = "#020906"
+pco = "#D9FFE9"
+font = "SansBold24"
+xcen = 1
+ycen = 1
+val = 0
+lenth = 0
+
+[[component]]
+name = "tAlert"
+type = "text"
+x = 8
+y = 66
+w = 304
+h = 16
+sta = 1
+bco = "#020906"
+pco = "#58FFA1"
+font = "Sans16"
+xcen = 1
+ycen = 1
+txt = "AREA BERSIH"
+txt_maxl = 24
+
+[[component]]
+name = "bInfo"
+type = "hotspot"
+x = 258
+y = 0
+w = 54
+h = 24

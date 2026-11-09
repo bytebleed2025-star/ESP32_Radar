@@ -44,7 +44,7 @@ backdrop and header logo (served as `web/logo.jpg`).
 │  ├─ ESP32_Radar.ino          ESP32 firmware (Arduino sketch)
 │  ├─ nextion_ui.h             Nextion UART2 driver + radar drawing
 │  └─ web_assets.h             auto-generated embedded UI
-├─ nextion/                    Nextion HMI layout guide + mockups
+├─ nextion/                    Nextion TFT, nxwright source, guide + renders
 ├─ web/
 │  ├─ index.html               editable radar UI (CSS + JS inline)
 │  └─ logo.jpg                 background/logo image
@@ -240,8 +240,15 @@ time as the web UI:
 - **Page 1 — INFO/KONTROL**: AP/STA IPs, RSSI, uptime, firmware, range buttons
   (100/200/300 cm) and pause/continue. Changes are mirrored to the web UI.
 
-The full wiring, Nextion Editor component tables, touch IDs and troubleshooting
-are in [`nextion/README.md`](nextion/README.md). The firmware driver is
+A **ready-to-flash screen** is included:
+
+- `nextion/NX3224T028.tft` — copy to a FAT32 microSD and power-cycle the display, or open the project in Nextion Editor and upload
+- `nextion/nx/` — text source for the same HMI (nxwright)
+- `nextion/DetektorAir.HMI` — Nextion Editor project (build artifact)
+
+The prebuilt HMI uses hotspot commands (`NX:INFO`, `NX:R100`, etc.), so no
+component-ID setup is required. Full wiring, flashing and troubleshooting are in
+[`nextion/README.md`](nextion/README.md). The firmware driver is
 `firmware/ESP32_Radar/nextion_ui.h`. Set `NEXTION_ENABLED 0` in the sketch if
 you do not use the display.
 
@@ -414,7 +421,7 @@ booting, move TRIG away from GPIO 5 (a strapping pin) to GPIO 4, and update the
 | UI changes don't appear | Run `python tools/build_assets.py`, re-upload, then hard-refresh the browser (Ctrl+F5). |
 | Compile: program storage overflow | Use a 4 MB module with an OTA partition. The OTA layout gives 1.9 MB per app slot. |
 | Page slow to load | Normal on first load (UI + logo are served from flash); it is cached by the browser afterwards. |
-| Nextion blank / no touch / wrong buttons | See the dedicated troubleshooting table in [`nextion/README.md`](nextion/README.md) (baud 115200, “Send Component ID”, TX/RX divider, component IDs). |
+| Nextion blank / no touch / wrong buttons | See [`nextion/README.md`](nextion/README.md) (baud 115200, TX/RX divider, prebuilt TFT, hotspot commands, custom-HMI component IDs). |
 
 ## Notes about ultrasonic sensing
 
@@ -431,10 +438,13 @@ booting, move TRIG away from GPIO 5 (a strapping pin) to GPIO 4, and update the
 
 - **Arduino IDE / arduino-cli** — ESP32 core **3.3.12**, ESP32Servo **3.2.1**,
   WebSockets **2.7.2**, partition scheme `min_spiffs` (1.9 MB OTA slot):
-  **1,150,042 bytes (58%) flash**, **55,064 bytes (16%) RAM**
+  **1,150,406 bytes (58%) flash**, **55,096 bytes (16%) RAM**
 - **PlatformIO Core 6.2.0** — `espressif32@7.0.1` (Arduino core 2.0.17),
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
-  **986,157 bytes (50.2%) flash**, **52,432 bytes (16.0%) RAM**
+  **986,493 bytes (50.2%) flash**, **52,456 bytes (16.0%) RAM**
+- **Nextion** — nxwright 0.2.5 + Nextion Editor 1.68.2 firmware →
+  `nextion/NX3224T028.tft` (**376,728 bytes**); page RAM 248 + 496 of 3584
+  bytes
 - UI/API integration in Chromium against a mock HTTP + WebSocket device:
   network scan, config save, OTA upload, reboot overlay and tab switching.
   The radio/servo/OTA behaviour and the Nextion UART/touch/drawing still need a
