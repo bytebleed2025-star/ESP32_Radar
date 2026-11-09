@@ -1,6 +1,6 @@
 # Nextion UI — NX3224T028 (2.8″ 320×240)
 
-Adds a local touch display to the DETEKTOR AIR radar **without removing the web
+Adds a local touch display to the LACAK DETEKTOR AIR radar **without removing the web
 UI**. The ESP32 keeps serving the web app (Config/OTA/radar) and also draws a
 simplified radar + info/control pages on the Nextion over UART2.
 
@@ -23,8 +23,8 @@ The ready-to-flash screen project is included:
 
 The TFT was built with **Nextion Editor 1.68.2’s firmware** for the
 **NX3224T028**, rotation **90°** (320×240 landscape), baud **115200**.
-The compiled app uses ~750 bytes of the 3584 bytes of page RAM and the TFT is
-about **368 KB**.
+The compiled app uses **248 + 496 bytes** of the 3584 bytes of page RAM, and the
+TFT is **376,728 bytes** (about 368 KB).
 
 The prebuilt HMI uses **hotspots + text tiles**, not component-ID buttons. Its
 hotspots send short serial commands:
@@ -157,7 +157,7 @@ Nextion GND ────────────────────── G
 
 | Type | Name | X | Y | W | H | Text / setting |
 |---|---|---|---|---|---|---|
-| Text | `tTitle` | 8 | 4 | 220 | 22 | `DETEKTOR AIR`, font 2, green |
+| Text | `tTitle` | 8 | 0 | 244 | 24 | `LACAK DETEKTOR AIR`, font 2 (Sans20), green |
 | Button | `bInfo` | 258 | 4 | 54 | 24 | `INFO`, font 0, **ID 1**, Send Component ID on release |
 | Text | `tDistLbl` | 8 | 30 | 90 | 12 | `DIST`, font 0, dim green |
 | Text | `tAngleLbl` | 116 | 30 | 90 | 12 | `ANGLE`, font 0, dim green |

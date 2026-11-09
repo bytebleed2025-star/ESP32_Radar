@@ -13,15 +13,15 @@ name = "tTitle"
 type = "text"
 x = 8
 y = 0
-w = 220
+w = 244
 h = 24
 sta = 1
 bco = "#020906"
 pco = "#D9FFE9"
-font = "SansBold24"
+font = "Sans20"
 xcen = 0
 ycen = 1
-txt = "DETEKTOR AIR"
+txt = "LACAK DETEKTOR AIR"
 txt_maxl = 20
 
 [[component]]

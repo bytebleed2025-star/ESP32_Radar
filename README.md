@@ -1,4 +1,4 @@
-# DETEKTOR AIR LACAK
+# LACAK DETEKTOR AIR
 
 **ESP32 · HC-SR04 · SG90 · live sonar radar web UI**
 
@@ -441,7 +441,7 @@ booting, move TRIG away from GPIO 5 (a strapping pin) to GPIO 4, and update the
   **1,150,406 bytes (58%) flash**, **55,096 bytes (16%) RAM**
 - **PlatformIO Core 6.2.0** — `espressif32@7.0.1` (Arduino core 2.0.17),
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
-  **986,493 bytes (50.2%) flash**, **52,456 bytes (16.0%) RAM**
+  **986,477 bytes (50.2%) flash**, **52,456 bytes (16.0%) RAM**
 - **Nextion** — nxwright 0.2.5 + Nextion Editor 1.68.2 firmware →
   `nextion/NX3224T028.tft` (**376,728 bytes**); page RAM 248 + 496 of 3584
   bytes

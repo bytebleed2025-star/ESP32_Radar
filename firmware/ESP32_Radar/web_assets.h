@@ -4,7 +4,7 @@
 #pragma once
 #include <pgmspace.h>
 
-static const unsigned int INDEX_HTML_LEN = 71371;
+static const unsigned int INDEX_HTML_LEN = 71359;
 static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 <!DOCTYPE html>
 <html lang="id">
@@ -12,7 +12,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="theme-color" content="#020a06"/>
-<title>DETEKTOR AIR LACAK — Radar Sonar</title>
+<title>LACAK DETEKTOR AIR - Radar Sonar</title>
 <style>
   :root{
     --green: #58ffa1;
@@ -545,8 +545,8 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       <div class="brand">
         <div class="logo"><img src="logo.jpg" alt="LACAK"/></div>
         <div class="titles">
-          <h1>DETEKTOR <span>AIR</span></h1>
-          <p>LACAK <i>·</i> SOLUSI PINTAR <i>·</i> RADAR SONAR</p>
+          <h1>LACAK DETEKTOR <span>AIR</span></h1>
+          <p>SOLUSI PINTAR <i>·</i> RADAR SONAR</p>
         </div>
       </div>
       <nav class="tabs" aria-label="Tampilan">

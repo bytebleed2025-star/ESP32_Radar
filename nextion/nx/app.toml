@@ -12,4 +12,5 @@ pictures = []
 fonts = [
     "Sans16",
     "SansBold24",
+    "Sans20",
 ]
