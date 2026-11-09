@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LACAK Detektor Air</string>
+    <string name="subtitle">SOLUSI PINTAR · RADAR SONAR</string>
+    <string name="eyebrow">LOCAL RADAR · ESP32 · WEBVIEW</string>
+    <string name="intro">Panel lokal untuk radar ultrasonik ESP32. Sambungkan ke hotspot perangkat, lalu buka radar.</string>
+    <string name="connection_title">KONEKSI PERANGKAT</string>
+    <string name="connection_sub">Masukkan alamat ESP32 pada jaringan yang sama.</string>
+    <string name="address_label">ALAMAT PERANGKAT (IP / HOSTNAME)</string>
+    <string name="ip_hint">192.168.4.1</string>
+    <string name="open_radar">BUKA RADAR</string>
+    <string name="wifi_settings">PENGATURAN WIFI</string>
+    <string name="status_idle">Siap menyambung ke radar.</string>
+    <string name="help_title">CARA MENGHUBUNGKAN</string>
+    <string name="help_steps">1. Nyalakan radar ESP32.\n2. Sambungkan HP ke hotspot DetektorAir (password radar12345) atau ke WiFi yang sama dengan radar.\n3. Tekan BUKA RADAR.\n4. Setelah radar tampil, tekan Back untuk kembali ke layar ini.</string>
+    <string name="back_hint">Saat radar tampil, tekan tombol Back untuk kembali ke layar ini.</string>
+    <string name="version">APK 1.1 · LACAK</string>
+    <string name="invalid_address">Alamat perangkat tidak valid. Contoh: 192.168.4.1</string>
+    <string name="connection_failed">Tidak dapat terhubung ke perangkat.</string>
+    <string name="connection_hint">Pastikan HP terhubung ke hotspot DetektorAir atau WiFi yang sama dengan radar, lalu coba lagi.</string>
+    <string name="paused_hint">Radar dijeda di layar ini. Tekan BUKA RADAR untuk memuat ulang.</string>
+    <string name="back_again">Tekan Back lagi untuk keluar.</string>
+    <string name="choose_firmware">Pilih firmware .bin</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Batal</string>
+</resources>

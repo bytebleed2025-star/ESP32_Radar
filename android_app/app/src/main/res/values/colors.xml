@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#020906</color>
+    <color name="bg_deep">#010503</color>
+    <color name="panel">#08130D</color>
+    <color name="panel_2">#0A1710</color>
+    <color name="green">#58FFA1</color>
+    <color name="green_bright">#E6FFF0</color>
+    <color name="green_soft">#7FE7B0</color>
+    <color name="dim">#6FAF8C</color>
+    <color name="amber">#FFC857</color>
+    <color name="red">#FF6262</color>
+    <color name="black">#000000</color>
+</resources>

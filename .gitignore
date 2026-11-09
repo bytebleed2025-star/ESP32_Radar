@@ -9,3 +9,9 @@
 
 # Nextion build artifacts (source is in nextion/nx, TFT is kept)
 nextion/*.HMI
+
+# Android build output (the root APK is the release copy)
+android_app/.gradle/
+android_app/app/build/
+android_app/local.properties
+android_app/DetektorAir-debug.apk

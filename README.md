@@ -35,6 +35,7 @@ backdrop and header logo (served as `web/logo.jpg`).
 - Automatic browser reconnect, full-screen mode, optional sonar ping sound
 - Responsive layout for phone, tablet and desktop
 - `?demo=1` simulation mode — preview the UI with no hardware
+- **Android WebView APK** (`DetektorAir-debug.apk`) for the same web UI, with a modern connection screen
 - Arduino IDE **and** PlatformIO project files included
 
 ## Project layout
@@ -52,6 +53,7 @@ backdrop and header logo (served as `web/logo.jpg`).
 │  └─ logo.jpg                 background/logo image
 ├─ tools/build_assets.py       embeds web/ into web_assets.h
 ├─ tools/remove_bg.py          removes image backgrounds (optional)
+├─ android_app/                Android WebView wrapper + Gradle project
 ├─ docs/                       screenshots
 └─ README.md
 ```
@@ -266,6 +268,26 @@ component-ID setup is required. Full wiring, flashing and troubleshooting are in
 [`nextion/README.md`](nextion/README.md). The firmware driver is
 `firmware/ESP32_Radar/nextion_ui.h`. Set `NEXTION_ENABLED 0` in the sketch if
 you do not use the display.
+
+## Android APK
+
+The WebView wrapper is built from `android_app/`:
+
+```bash
+cd android_app
+build_apk.bat
+```
+
+The ready APK is at the project root:
+
+```text
+DetektorAir-debug.apk
+```
+
+On the phone, join the ESP32 hotspot/WiFi, open the app, enter `192.168.4.1`
+(or the STA IP) and press **BUKA RADAR**. The wrapper supports the full web UI,
+WebSocket, WebAudio, file-picker OTA and Back-to-settings. See
+[`android_app/README.md`](android_app/README.md).
 
 ## CONFIG tab — network & OTA
 
