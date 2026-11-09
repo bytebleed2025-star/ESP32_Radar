@@ -49,6 +49,7 @@ backdrop and header logo (served as `web/logo.jpg`).
 │  ├─ index.html               editable radar UI (CSS + JS inline)
 │  └─ logo.jpg                 background/logo image
 ├─ tools/build_assets.py       embeds web/ into web_assets.h
+├─ tools/remove_bg.py          removes image backgrounds (optional)
 ├─ docs/                       screenshots
 └─ README.md
 ```
@@ -373,6 +374,18 @@ python tools/build_assets.py
 - The page also works from disk; `?demo=1` starts the simulator.
 - After changing the UI, rebuild the assets and flash again. A web OTA upload
   contains the UI as well, because it is embedded in the firmware.
+
+### Removing an image background
+
+`tools/remove_bg.py` makes transparent PNGs with rembg:
+
+```bash
+python -m pip install "rembg[cpu]"
+python tools/remove_bg.py photo.jpg cutout.png
+python tools/remove_bg.py photos/ cutouts/ --trim
+```
+
+The first run downloads the U2Net model (about 176 MB).
 
 ### Tuning
 
