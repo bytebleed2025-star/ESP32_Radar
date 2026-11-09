@@ -5,7 +5,7 @@
 on tBoot.timer:
   if (bootStep == 0) {
     bootStep = 1
-    pWelcome.pic = @pic(Welcome_screen_0)
+    pOverlay.pic = @pic(Welcome_screen_0)
     tBoot.tim = 2000
   } else {
     tBoot.en = 0

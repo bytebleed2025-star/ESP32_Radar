@@ -243,8 +243,9 @@ Readouts:
 The optional NX3224T028 gives you a local 2.8″ touch panel. It runs at the same
 time as the web UI:
 
-- **Page 2 — WELCOME**: `Welcome_screen_1` for 1.5 s, then
-  `Welcome_screen_0` for 2 s, then the radar page.
+- **Page 2 — WELCOME**: `Welcome_screen_1` (picture ID 0) for 1.5 s, then
+  `Welcome_screen_0` (picture ID 1) appears over it for 2 s, then the radar
+  page. The base logo stays on screen during the second phase.
 - **Page 0 — RADAR**: distance, angle, nearest, alert, and a 5 FPS PPI sweep
   with the latest contacts.
 - **Page 1 — INFO/KONTROL**: AP/STA IPs, RSSI, uptime, firmware, range buttons
@@ -490,7 +491,7 @@ directly.
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
   **996,269 bytes (50.7%) flash**, **52,512 bytes (16.0%) RAM**
 - **Nextion** — nxwright 0.2.5 + Nextion Editor 1.68.2 firmware →
-  `nextion/NX3224T028.tft` (**846,708 bytes**); page RAM 256 + 504 + 36 of 3584
+  `nextion/NX3224T028.tft` (**847,708 bytes**); page RAM 256 + 504 + 40 of 3584
   bytes
 - UI/API integration in Chromium against a mock HTTP + WebSocket device:
   network scan, config save, OTA upload, reboot overlay and tab switching.

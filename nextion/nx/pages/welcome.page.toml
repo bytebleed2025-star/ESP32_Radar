@@ -18,6 +18,15 @@ h = 240
 pic = "Welcome_screen_1"
 
 [[component]]
+name = "pOverlay"
+type = "picture"
+x = 0
+y = 0
+w = 320
+h = 240
+pic = 65535
+
+[[component]]
 name = "tBoot"
 type = "timer"
 tim = 1500

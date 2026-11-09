@@ -17,6 +17,10 @@ HTML renderer is [`render/render.html`](render/render.html).
 |---|---|---|
 | ![](Welcome_screen_1.png) | ![](Welcome_screen_0.png) | ![](Page_underlay.png) |
 
+The TFT’s picture ID 1 is the opaque composite
+[`Welcome_screen_0_composite.png`](Welcome_screen_0_composite.png), made from
+ID 0 plus the LACAK text so it can overlay the logo on the Basic display.
+
 ## Prebuilt HMI (included)
 
 The ready-to-flash screen project is included:
@@ -30,8 +34,8 @@ The ready-to-flash screen project is included:
 
 The TFT was built with **Nextion Editor 1.68.2’s firmware** for the
 **NX3224T028**, rotation **90°** (320×240 landscape), baud **115200**.
-The compiled app uses **256 + 504 + 36 bytes** of the 3584 bytes of page RAM,
-and the TFT is **846,708 bytes** (about 827 KB).
+The compiled app uses **256 + 504 + 40 bytes** of the 3584 bytes of page RAM,
+and the TFT is **847,708 bytes** (about 828 KB).
 
 The prebuilt HMI uses **hotspots + text tiles**, not component-ID buttons. Its
 hotspots send short serial commands:
@@ -48,9 +52,14 @@ Page 2 (`welcome`) plays at power-on:
 
 | Time | Image |
 |---|---|
-| 0.0 s – 1.5 s | `Welcome_screen_1.png` (full logo) |
-| 1.5 s – 3.5 s | `Welcome_screen_0.png` (LACAK) |
+| 0.0 s - 1.5 s | picture ID 0: `Welcome_screen_1.png` (full logo) |
+| 1.5 s - 3.5 s | ID 0 stays visible; picture ID 1 `Welcome_screen_0.png` appears over it |
 | 3.5 s onward | page 0 (`radar`) |
+
+Picture ID 1 is stored as a composite of ID 0 plus the LACAK text, so it can
+overlay the logo on the Basic display without needing PNG alpha blending.
+
+
 
 At the end it prints `NX:READY`; the ESP32 waits for that before drawing the
 radar, so the boot animation is not overwritten. A custom HMI without
