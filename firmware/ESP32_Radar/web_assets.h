@@ -4,7 +4,7 @@
 #pragma once
 #include <pgmspace.h>
 
-static const unsigned int INDEX_HTML_LEN = 75572;
+static const unsigned int INDEX_HTML_LEN = 76683;
 static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 <!DOCTYPE html>
 <html lang="id">
@@ -212,6 +212,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     background:rgba(88,255,161,.16); color:var(--green-bright);
     box-shadow:0 0 14px rgba(88,255,161,.12);
   }
+  .hand-hint{ font-size:8px; line-height:1.5; color:rgba(185,255,214,.35); letter-spacing:.03em; }
 
   /* ---------- telemetry ---------- */
   .stats .metric{ display:flex; flex-direction:column; gap:4px; }
@@ -636,6 +637,17 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
           <button type="button" class="mode-btn" id="mode-hand">HAND</button>
         </div>
 
+        <label class="slider" id="angle-wrap" hidden>
+          <div class="slider-top"><span>SUDUT MANUAL <small>ANGLE</small></span><b><span id="angle-val">90</span>°</b></div>
+          <input id="angle" type="range" min="0" max="180" step="1" value="90"/>
+          <div class="hand-hint">HAND: geser sudut atau pakai tombol jog.</div>
+        </label>
+
+        <div class="btn-row" id="jog-row" hidden>
+          <button class="btn ghost" id="jog-left">◀ 5°</button>
+          <button class="btn ghost" id="jog-right">5° ▶</button>
+        </div>
+
         <label class="slider">
           <div class="slider-top"><span>JANGKAUAN <small>RANGE</small></span><b><span id="range-val">200</span> cm</b></div>
           <input id="range" type="range" min="40" max="400" step="10" value="200"/>
@@ -649,11 +661,6 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
         <label class="slider">
           <div class="slider-top"><span>KECEPATAN <small>STEP</small></span><b><span id="speed-val">2</span>°</b></div>
           <input id="speed" type="range" min="1" max="5" step="1" value="2"/>
-        </label>
-
-        <label class="slider" id="angle-wrap" hidden>
-          <div class="slider-top"><span>SUDUT MANUAL <small>ANGLE</small></span><b><span id="angle-val">90</span>°</b></div>
-          <input id="angle" type="range" min="0" max="180" step="1" value="90"/>
         </label>
 
         <div class="btn-row">
@@ -676,6 +683,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
         <div class="lines">
           <div><span>JENIS</span><b>HC-SR04 · MG995</b></div>
           <div><span>SEKTOR</span><b>180°</b></div>
+          <div><span>TARGET</span><b id="servo-target">AUTO</b></div>
           <div><span>STATUS</span><b id="scan-state">MENYAPU</b></div>
           <div><span>PING</span><b id="pings">0</b></div>
         </div>
@@ -1368,6 +1376,8 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
   function syncManualUI(){
     $("angle").value = S.manual;
     $("angle-val").textContent = S.manual;
+    var t = $("servo-target");
+    if (t) t.textContent = S.hand ? (S.manual + "°") : "AUTO";
   }
   function updatePauseUI(){
     var b = $("pause"), l = $("pause-label");
@@ -1386,6 +1396,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     $("mode-auto").classList.toggle("active", !S.hand);
     $("mode-hand").classList.toggle("active", S.hand);
     $("angle-wrap").hidden = !S.hand;
+    $("jog-row").hidden = !S.hand;
     syncManualUI();
     updatePauseUI();
     updateNote();
@@ -1966,11 +1977,20 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     angleEl.value = S.manual;
     $("angle-val").textContent = S.manual;
     angleEl.addEventListener("input", function(){
-      S.manual = clamp(parseInt(angleEl.value, 10) || 90, 0, 180);
-      $("angle-val").textContent = S.manual;
+      var v = parseInt(angleEl.value, 10);
+      S.manual = clamp(isNaN(v) ? S.manual : v, 0, 180);
+      syncManualUI();
       clearTimeout(angleTimer);
       angleTimer = setTimeout(function(){ send("A" + S.manual); }, 60);
     });
+
+    function jog(delta){
+      S.manual = clamp(S.manual + delta, 0, 180);
+      syncManualUI();
+      send("A" + S.manual);
+    }
+    $("jog-left").addEventListener("click", function(){ jog(-5); });
+    $("jog-right").addEventListener("click", function(){ jog(5); });
 
     $("mode-auto").addEventListener("click", function(){
       S.hand = false;
@@ -1983,10 +2003,14 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     $("mode-hand").addEventListener("click", function(){
       S.hand = true;
       S.paused = false;
-      S.manual = Math.round(S.servoAngle || S.manual);
+      var current = (typeof S.servoAngle === "number" && isFinite(S.servoAngle))
+        ? S.servoAngle : S.manual;
+      S.manual = clamp(Math.round(current), 0, 180);
       updateModeUI();
       send("M1");
-      toast("MODE HAND - ATUR SUDUT MANUAL");
+      // Keep the firmware target equal to the slider after the mode switch.
+      setTimeout(function(){ send("A" + S.manual); }, 80);
+      toast("MODE HAND - GESER SUDUT MANUAL");
     });
 
     $("pause").addEventListener("click", function(){

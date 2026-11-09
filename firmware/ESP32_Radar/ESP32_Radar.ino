@@ -418,6 +418,7 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
       char msg[32];
       memcpy(msg, payload, length);
       msg[length] = '\0';
+      Serial.printf("[WS] cmd %s\n", msg);
 
       switch (msg[0]) {
         case 'R':                       // "R250" -> range in cm
@@ -445,6 +446,8 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
           } else {
             g_direction = 1;
           }
+          Serial.printf("[WS] mode=%s target=%d angle=%d\n",
+                        g_handMode ? "HAND" : "AUTO", g_manualTarget, g_angle);
           sendConfig(255);
           break;
 
@@ -452,6 +455,8 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
           g_handMode = true;
           g_manualTarget = constrain(atoi(msg + 1), 0, 180);
           g_paused = false;
+          Serial.printf("[WS] hand target=%d angle=%d paused=%d\n",
+                        g_manualTarget, g_angle, g_paused ? 1 : 0);
           sendConfig(255);
           break;
 
@@ -513,6 +518,18 @@ static void handleInfo() {
   body += ",\"ota_capable\":" + String(cantOta ? "true" : "false");
   body += ",\"ota\":" + String(g_otaActive ? "true" : "false");
   body += "}";
+  sendJson(200, body);
+}
+
+static void handleDebug() {
+  char body[192];
+  snprintf(body, sizeof(body),
+           "{\"ok\":true,\"mode\":\"%s\",\"paused\":%d,\"angle\":%d,"
+           "\"target\":%d,\"step\":%u,\"alert\":%d,\"buzzer\":%d,"
+           "\"last_cm\":%d}",
+           g_handMode ? "HAND" : "AUTO", g_paused ? 1 : 0, g_angle,
+           g_manualTarget, (unsigned)stepDeg, g_alertCm,
+           g_buzzerEnabled ? 1 : 0, g_lastMeasurement);
   sendJson(200, body);
 }
 
@@ -892,6 +909,7 @@ void setup() {
   });
 
   server.on("/api/info",     HTTP_GET,  handleInfo);
+  server.on("/api/debug",    HTTP_GET,  handleDebug);
   server.on("/api/config",   HTTP_GET,  handleConfigGet);
   server.on("/api/config",   HTTP_POST, handleConfigSave);
   server.on("/api/scan",     HTTP_GET,  handleScan);
