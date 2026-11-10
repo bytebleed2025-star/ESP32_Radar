@@ -452,8 +452,8 @@ The web UI has two servo modes:
   sweep the servo; **release to stop**. Drag **SUDUT MANUAL** or use the
   **◀ 5° / 5° ▶** jog buttons to position it. **KECEPATAN** sets how many
   degrees it moves per step (1–5°), and the current target is shown under
-  **SENSOR → TARGET**. A 0.8 s heartbeat stops the servo automatically if the
-  browser disconnects while the button is held.
+  **SENSOR → TARGET**. A 3 s heartbeat timeout stops the servo automatically if
+  the browser or Nextion heartbeat disappears while the button is held.
 
 The **BUZZER** button enables/disables the local alarm on **GPIO 23**. It beeps
 when a measured contact is within the **AMBANG AIR** threshold (10–150 cm),
@@ -530,7 +530,7 @@ directly.
 
 - **Arduino IDE / arduino-cli** — ESP32 core **3.3.12**, ESP32Servo **3.2.1**,
   WebSockets **2.7.2**, partition scheme `min_spiffs` (1.9 MB OTA slot):
-  **1,163,486 bytes (59%) flash**, **55,144 bytes (16%) RAM**
+  **1,163,490 bytes (59%) flash**, **55,144 bytes (16%) RAM**
 - **PlatformIO Core 6.2.0** — `espressif32@7.0.1` (Arduino core 2.0.17),
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
   **999,633 bytes (50.8%) flash**, **52,520 bytes (16.0%) RAM**

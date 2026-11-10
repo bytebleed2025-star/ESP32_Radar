@@ -420,7 +420,8 @@ static void onNextionCommand(const char *cmd) {
   } else if (strcmp(cmd, "NX:HOLDON") == 0) {
     g_handMode = true;
     g_handSweep = true;
-    g_handHoldUntil = millis() + 800UL;
+    // The Nextion sends HOLDON every 250 ms; allow a slow first heartbeat.
+    g_handHoldUntil = millis() + 3000UL;
     g_paused = false;
     g_lastHandPingMs = 0;
   } else if (strcmp(cmd, "NX:HOLDOFF") == 0) {
