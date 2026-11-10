@@ -4,7 +4,7 @@
 #pragma once
 #include <pgmspace.h>
 
-static const unsigned int INDEX_HTML_LEN = 79037;
+static const unsigned int INDEX_HTML_LEN = 79466;
 static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 <!DOCTYPE html>
 <html lang="id">
@@ -1493,6 +1493,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       ping(1250, 0.22, 0.05);
       send("T" + S.threshold);
       send("B" + (S.buzzer ? "1" : "0"));
+      send((document.hidden || S.hand) ? "H0" : "H1");
     };
     ws.onmessage = function(ev){
       var m;
@@ -2078,13 +2079,15 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       S.paused = false;
       updateModeUI();
       send("M0");
-      toast("MODE AUTO - SAPUAN 180°");
+      send(document.hidden ? "H0" : "H1");
+      toast("MODE AUTO - WEB UI TERBUKA");
     });
 
     $("mode-hand").addEventListener("click", function(){
       cancelHandHold(false);
       S.hand = true;
       S.paused = true;
+      send("H0");
       var current = (typeof S.servoAngle === "number" && isFinite(S.servoAngle))
         ? S.servoAngle : S.manual;
       S.manual = clamp(Math.round(current), 0, 180);
@@ -2127,9 +2130,20 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     });
 
     document.addEventListener("visibilitychange", function(){
-      if (document.hidden) cancelHandHold(true);
-      else hudAt = 0;
+      if (document.hidden) {
+        cancelHandHold(true);
+        send("H0");
+      } else {
+        hudAt = 0;
+        if (!S.hand) send("H1");
+      }
     });
+
+    // AUTO runs only while this page is visible and connected.
+    setInterval(function(){
+      if (S.demo || document.hidden || S.hand) return;
+      if (S.ws && S.ws.readyState === WebSocket.OPEN) send("H1");
+    }, 1000);
   }
 
   /* ---------- boot ---------- */

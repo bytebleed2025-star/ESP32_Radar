@@ -24,7 +24,7 @@ backdrop and header logo (served as `web/logo.jpg`).
 - “AIR TERDETEKSI” water/contact alert with an adjustable threshold (10–150 cm)
 - Live echo-history graph, nearest contact, last echo and ping counter
 - Range (40–400 cm), scan speed (1–5°) and pause controls from the browser
-- **AUTO / HAND servo modes** — AUTO sweeps 180°; HAND holds a manual angle with start/stop and speed control
+- **AUTO / HAND servo modes** - AUTO sweeps 180° only while the web UI is visible; HAND holds a manual angle with start/stop and speed control
 - **Buzzer output on GPIO 23** — beeps when a contact is within the adjustable water threshold (enable/disable in the web UI)
 - **AP + STA at the same time** — the hotspot stays available while the ESP32
   also joins a 2.4 GHz home WiFi network
@@ -474,7 +474,9 @@ The first run downloads the U2Net model (about 176 MB).
 
 The web UI has two servo modes:
 
-- **AUTO** — the servo sweeps 0–180° continuously. `JEDA` pauses/resumes.
+- **AUTO** — the servo sweeps 0–180° only while a visible web UI is connected.
+  Minimizing/closing the page or losing the WebSocket stops the sweep after a
+  short 3 s heartbeat timeout. `JEDA` pauses/resumes.
 - **HAND** — momentary manual control. **Press and hold `TAHAN = GERAK`** to
   sweep the servo; **release to stop**. Drag **SUDUT MANUAL** or use the
   **◀ 5° / 5° ▶** jog buttons to position it. **KECEPATAN** sets how many
@@ -557,10 +559,10 @@ directly.
 
 - **Arduino IDE / arduino-cli** — ESP32 core **3.3.12**, ESP32Servo **3.2.1**,
   WebSockets **2.7.2**, partition scheme `min_spiffs` (1.9 MB OTA slot):
-  **1,199,282 bytes (60%) flash**, **54,616 bytes (16%) RAM**
+  **1,199,942 bytes (61%) flash**, **54,632 bytes (16%) RAM**
 - **PlatformIO Core 6.2.0** — `espressif32@7.0.1` (Arduino core 2.0.17),
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
-  **1,020,097 bytes (51.9%) flash**, **51,956 bytes (15.9%) RAM**
+  **1,020,725 bytes (51.9%) flash**, **51,964 bytes (15.9%) RAM**
 - **Nextion** — nxwright 0.2.5 + Nextion Editor 1.68.2 firmware →
   `nextion/NX3224T028.tft` (**1,231,936 bytes**); page RAM
   260 + 452 + 44 + 528 of 3584 bytes

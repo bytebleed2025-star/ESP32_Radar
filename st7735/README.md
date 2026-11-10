@@ -68,6 +68,10 @@ library's `User_Setup.h`.
 - Footer shows range, step and STOP when paused
 - Amber contacts are inside the water-alert threshold
 
+AUTO runs only while a **visible** web UI is connected. Minimizing or closing
+the page stops the sweep after a 3 s heartbeat timeout; opening it again
+resumes AUTO. HAND mode is independent of this gate.
+
 ## Display settings
 
 In `st7735_ui.h` or `platformio.ini`:

@@ -131,6 +131,9 @@ static bool g_staWasConnected = false;
 static bool g_paused         = false;
 static bool g_handMode       = false;
 static bool g_handSweep      = false;
+static uint32_t g_webVisibleMask = 0;   // one bit per WebSocket client
+static unsigned long g_webSeenMs = 0;
+static bool g_webAutoOk      = false;
 static unsigned long g_handHoldUntil = 0;
 static int  g_manualTarget   = 90;
 static int  g_alertCm        = 50;
@@ -473,12 +476,14 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
   switch (type) {
     case WStype_CONNECTED: {
       IPAddress ip = webSocket.remoteIP(num);
+      if (num < 32) g_webVisibleMask &= ~(1UL << num);
       Serial.printf("[WS] client %u connected from %s\n", num, ip.toString().c_str());
       sendConfig(num);
       break;
     }
 
     case WStype_DISCONNECTED:
+      if (num < 32) g_webVisibleMask &= ~(1UL << num);
       Serial.printf("[WS] client %u disconnected\n", num);
       break;
 
@@ -491,6 +496,17 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
       Serial.printf("[WS] cmd %s\n", msg);
 
       switch (msg[0]) {
+        case 'H':                       // "H1" visible / "H0" hidden
+          if (num < 32) {
+            if (msg[1] == '1') {
+              g_webVisibleMask |= (1UL << num);
+              g_webSeenMs = millis();
+            } else {
+              g_webVisibleMask &= ~(1UL << num);
+            }
+          }
+          break;
+
         case 'R':                       // "R250" -> range in cm
           maxRangeCm = constrain(atoi(msg + 1), 40, 400);
           sendConfig(255);
@@ -1080,6 +1096,10 @@ void loop() {
 
   updateBuzzer(now);
 
+  // AUTO runs only while at least one visible web UI is sending H1.
+  g_webAutoOk = (g_webVisibleMask != 0) &&
+                ((unsigned long)(now - g_webSeenMs) < 3000UL);
+
   // Momentary HAND control: stop if the browser stops sending P0 heartbeats.
   if (g_handMode && g_handSweep &&
       (int32_t)(now - g_handHoldUntil) >= 0) {
@@ -1089,7 +1109,9 @@ void loop() {
     sendConfig(255);
   }
 
-  if (!g_otaActive && !g_paused && now - g_lastStepMs >= STEP_INTERVAL_MS) {
+  bool autoAllowed = g_handMode || g_webAutoOk;
+  if (!g_otaActive && !g_paused && autoAllowed &&
+      now - g_lastStepMs >= STEP_INTERVAL_MS) {
     g_lastStepMs = now;
     takeStep();
   }
