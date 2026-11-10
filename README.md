@@ -289,6 +289,25 @@ On the phone, join the ESP32 hotspot/WiFi, open the app, enter `192.168.4.1`
 WebSocket, WebAudio, file-picker OTA and Back-to-settings. See
 [`android_app/README.md`](android_app/README.md).
 
+### Files to ship
+
+Ship these two files to another user:
+
+```text
+DetektorAir-ota.bin        ESP32 OTA firmware
+DetektorAir-debug.apk      Android WebView APK
+```
+
+For the Nextion display, ship only:
+
+```text
+nextion/NX3224T028.tft     flashable screen file
+```
+
+Do **not** ship `bootloader.bin`, `partitions.bin`, `.elf` files or the `.HMI`
+editor project as firmware. The OTA `.bin` requires the board to already have
+an OTA partition; otherwise flash once over USB with `min_spiffs`.
+
 ## CONFIG tab — network & OTA
 
 ![Config tab](docs/screenshot-config.png)
