@@ -310,6 +310,31 @@ Do **not** ship `bootloader.bin`, `partitions.bin`, `.elf` files or the `.HMI`
 editor project as firmware. The OTA `.bin` requires the board to already have
 an OTA partition; otherwise flash once over USB with `min_spiffs`.
 
+### New / blank board: merged factory image
+
+For a completely blank ESP32, use one of the merged images and flash it at
+**0x0**:
+
+```text
+DetektorAir-Nextion-factory.bin   Nextion display build
+DetektorAir-ST7735-factory.bin    ST7735 display build
+```
+
+```cmd
+esptool.py --chip esp32 --port COM5 write_flash 0x0 DetektorAir-Nextion-factory.bin
+```
+
+The merged image contains:
+
+```text
+0x1000   bootloader
+0x8000   partition table
+0xe000   boot_app0
+0x10000  application
+```
+
+After this first flash, use the normal OTA/ArduinoOTA updates.
+
 ## CONFIG tab — network & OTA
 
 ![Config tab](docs/screenshot-config.png)
