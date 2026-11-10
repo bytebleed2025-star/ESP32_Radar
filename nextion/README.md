@@ -35,7 +35,7 @@ The ready-to-flash screen project is included:
 The TFT was built with **Nextion Editor 1.68.2’s firmware** for the
 **NX3224T028**, rotation **90°** (320×240 landscape), baud **115200**.
 The compiled app uses **260 + 452 + 44 + 528 bytes** of the 3584 bytes of
-page RAM, and the TFT is **1,231,916 bytes** (about 1.2 MB).
+page RAM, and the TFT is **1,231,936 bytes** (about 1.2 MB).
 
 The prebuilt HMI uses **hotspots + text tiles**, not component-ID buttons. Its
 hotspots send short serial commands:
@@ -65,9 +65,9 @@ overlay the logo on the Basic display without needing PNG alpha blending.
 
 
 
-At the end it prints `NX:READY`; the ESP32 waits for that before drawing the
-radar, so the boot animation is not overwritten. A custom HMI without
-`NX:READY` still starts after a **6 s** fallback.
+At the end it prints `NX:READY`; the ESP32 waits for the radar page’s
+`NX:RADAR` load event before drawing, so the boot animation is never
+overwritten. A custom HMI without `NX:RADAR` falls back after **8 s**.
 
 Pages 0, 1 and 3 use the modern card backgrounds **`Page_radar.png`**,
 **`Page_control.png`** and **`Page_info.png`**. The original
@@ -320,8 +320,8 @@ Change the following in `nextion_ui.h` if needed:
 
 - Set `NEXTION_ENABLED 0` in `ESP32_Radar.ino` if the display is not connected.
 - The ESP32 starts the Nextion after the web server/OTA setup, waits 1.2 s for
-  the display to boot, then waits for the welcome page’s `NX:READY` (or a 6 s
-  fallback) before drawing the radar.
+  the display to boot, then waits for the welcome page's `NX:READY` and the
+  radar page's `NX:RADAR` (or an 8 s fallback) before drawing the radar.
 - The Nextion range/pause buttons call the same firmware state as the web UI;
   the web UI receives a `cfg` broadcast and stays in sync.
 - The radar page is drawn for the last 12 contacts in an ~8 s window.
@@ -340,7 +340,9 @@ Normal serial output after boot:
 [NX] Nextion UART started: 115200 baud, RX=16 TX=17 (waiting for welcome)
 ...
 [NX] cmd NX:READY
-[NX] Welcome finished, radar page active
+[NX] Welcome finished, waiting for radar page
+[NX] cmd NX:RADAR
+[NX] Radar page loaded, drawing enabled
 ...
 [NX] cmd NX:INFO
 [NX] cmd NX:R200
@@ -348,7 +350,7 @@ Normal serial output after boot:
 
 Custom component-ID HMIs additionally print `[NX] touch page=... comp=...`.
 A custom HMI that never sends `NX:READY` logs
-`[NX] Welcome timeout, forcing radar page` after 6 s.
+`[NX] Welcome timeout, forcing radar page` after 8 s.
 
 - The welcome animation should play for about 3.5 s, then page 0 shows the
   radar and numbers.
@@ -370,7 +372,7 @@ If you see values but no radar, check the radar area is empty in the HMI (the
 |---|---|
 | Display white/blank | 5 V power, common ground, HMI flashed, baud 115200. |
 | Welcome animation skipped | The TFT is old or `program.nx` still says `page radar`; rebuild and flash the new TFT. |
-| Radar appears after ~6 s instead of 3.5 s | The welcome page’s `NX:READY` did not reach the ESP32 (Nextion TX/divider, firmware without the new parser); the fallback forces page 0. |
+| Radar appears after ~8 s instead of 3.5 s | The welcome page's `NX:READY` or page 0's `NX:RADAR` did not reach the ESP32 (Nextion TX/divider, old firmware); the fallback forces page 0. |
 | Page background not visible | The card background sits under the text tiles; check the `pUnderlay` picture is present and points at `Page_radar`, `Page_control` or `Page_info`. |
 | No text updates | Baud mismatch (9600 vs 115200), wrong object names, page 0 not loaded, `txt_maxl` too small. |
 | Touch does nothing (prebuilt HMI) | Baud 115200, HMI flashed, Nextion TX divider, and check for `[NX] cmd ...` in the serial log. |

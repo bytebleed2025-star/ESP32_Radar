@@ -1,3 +1,7 @@
+// Tell the ESP32 only after the radar page is actually loaded.
+on radar.load:
+  prints "NX:RADAR\r",0
+
 on bInfo.up:
   prints "NX:INFO\r",0
   page info

@@ -361,16 +361,24 @@ static void handleTextCommand(const char *line) {
   Serial.printf("[NX] cmd %s\n", line);
 
   if (strcmp(line, "NX:READY") == 0) {
-    // The welcome animation has finished and page 0 (radar) is opening.
+    // The splash has finished. Wait for radar.load's NX:RADAR before drawing.
+    g_page = NX_PAGE_WELCOME;
+    g_ready = false;
+    g_nextDrawMs = 0;
+    g_nextTextMs = 0;
+    g_bootDeadlineMs = millis() + 3000UL;
+    Serial.println("[NX] Welcome finished, waiting for radar page");
+  } else if (strcmp(line, "NX:RADAR") == 0) {
+    // radar.load has run: page 0 is now actually on screen.
     g_ready = true;
     g_page = NX_PAGE_RADAR;
     g_lastShownAngle = -1;
     g_lastShownDist  = -1;
     g_lastShownNear  = -1;
     g_alertDirty     = true;
-    g_nextDrawMs = millis() + 200;
-    g_nextTextMs = millis() + 200;
-    Serial.println("[NX] Welcome finished, radar page active");
+    g_nextDrawMs = millis() + 400;
+    g_nextTextMs = millis() + 400;
+    Serial.println("[NX] Radar page loaded, drawing enabled");
   } else if (strcmp(line, "NX:CTRL") == 0) {
     g_page = NX_PAGE_CONTROL;
     g_nextTextMs = 0;
@@ -488,9 +496,9 @@ inline void begin() {
 
   cmd("bkcmd=0");     // no command-return chatter
   cmd("sendxy=0");    // use component IDs, not raw coordinates
-  g_page = NX_PAGE_RADAR;
+  g_page = NX_PAGE_WELCOME;
   g_ready = false;
-  g_bootDeadlineMs = millis() + 6000UL;
+  g_bootDeadlineMs = millis() + 8000UL;
   g_nextDrawMs = 0;
   g_nextTextMs = 0;
 
@@ -547,8 +555,8 @@ inline void loop() {
       g_lastShownDist  = -1;
       g_lastShownNear  = -1;
       g_alertDirty     = true;
-      g_nextDrawMs = millis() + 200;
-      g_nextTextMs = millis() + 200;
+      g_nextDrawMs = millis() + 800;
+      g_nextTextMs = millis() + 800;
       Serial.println("[NX] Welcome timeout, forcing radar page");
     }
     return;
