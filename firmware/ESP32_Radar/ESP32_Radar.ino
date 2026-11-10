@@ -602,14 +602,15 @@ static void handleInfo() {
 }
 
 static void handleDebug() {
-  char body[192];
+  char body[256];
   snprintf(body, sizeof(body),
            "{\"ok\":true,\"mode\":\"%s\",\"paused\":%d,\"sweep\":%d,"
            "\"angle\":%d,\"target\":%d,\"step\":%u,\"alert\":%d,"
-           "\"buzzer\":%d,\"last_cm\":%d}",
+           "\"buzzer\":%d,\"last_cm\":%d,\"nx_rx\":%lu}",
            g_handMode ? "HAND" : "AUTO", g_paused ? 1 : 0,
            g_handSweep ? 1 : 0, g_angle, g_manualTarget, (unsigned)stepDeg,
-           g_alertCm, g_buzzerEnabled ? 1 : 0, g_lastMeasurement);
+           g_alertCm, g_buzzerEnabled ? 1 : 0, g_lastMeasurement,
+           (unsigned long)NextionUI::rxBytes());
   sendJson(200, body);
 }
 

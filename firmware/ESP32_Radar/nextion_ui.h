@@ -122,6 +122,7 @@ static uint8_t  g_rxBuf[8];
 static uint8_t  g_rxLen = 0;
 static char     g_lineBuf[32];
 static uint8_t  g_lineLen = 0;
+static uint32_t g_rxTotal = 0;
 static int      g_lastTouchComp = -1;
 static uint32_t g_lastTouchMs = 0;
 
@@ -421,6 +422,7 @@ static void handleTextCommand(const char *line) {
 static void pollSerial() {
   while (NxSerial.available()) {
     uint8_t b = (uint8_t)NxSerial.read();
+    g_rxTotal++;
 
     if (g_rxLen == 0) {
       if (b == 0x65 || b == 0x66) {
@@ -486,9 +488,14 @@ inline void setCommandCallback(NextionCommandCallback onCommand) {
   g_onCommand = onCommand;
 }
 
+inline uint32_t rxBytes() {
+  return g_rxTotal;
+}
+
 inline void begin() {
-  NxSerial.begin(NX_BAUD, SERIAL_8N1, NX_RX_PIN, NX_TX_PIN);
+  NxSerial.setRxBufferSize(512);
   NxSerial.setTxBufferSize(2048);
+  NxSerial.begin(NX_BAUD, SERIAL_8N1, NX_RX_PIN, NX_TX_PIN);
 
   // The Nextion boots slower than the ESP32. The welcome page plays for
   // 3.5 s and then prints NX:READY; until then, do not draw on it.
@@ -593,6 +600,7 @@ inline void loop() {
 namespace NextionUI {
 inline void setCallbacks(NextionRangeCallback, NextionVoidCallback) {}
 inline void setCommandCallback(NextionCommandCallback) {}
+inline uint32_t rxBytes() { return 0; }
 inline void begin() {}
 inline void addReading(int, int) {}
 inline void setConfig(int, bool, int, bool, int, int, bool) {}
