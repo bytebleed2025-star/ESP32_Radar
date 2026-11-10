@@ -61,9 +61,12 @@
 
 #include "web_assets.h"
 
-// Set to 0 if you do not have the Nextion display attached.
-#define NEXTION_ENABLED 1
+// ST7735 branch: the serial Nextion display is disabled.
+#define NEXTION_ENABLED 0
 #include "nextion_ui.h"
+
+#define ST7735_ENABLED 1
+#include "st7735_ui.h"
 
 /* --------------------------------------------------------------------------
  *  VERSION
@@ -367,6 +370,10 @@ static void sendConfig(uint8_t num) {
                        g_handMode,
                        g_handMode ? g_manualTarget : g_angle,
                        stepDeg, g_buzzerEnabled);
+  St7735UI::setConfig(maxRangeCm, g_paused, g_alertCm,
+                      g_handMode,
+                      g_handMode ? g_manualTarget : g_angle,
+                      stepDeg, g_buzzerEnabled);
 }
 
 static void sendStatus() {
@@ -390,6 +397,9 @@ static void sendStatus() {
   NextionUI::setNetwork(networkMode(), apip.c_str(), staip.c_str(),
                         sta ? WiFi.RSSI() : 0,
                         (unsigned long)(millis() / 1000UL), FW_VERSION);
+  St7735UI::setNetwork(networkMode(), apip.c_str(), staip.c_str(),
+                       sta ? WiFi.RSSI() : 0,
+                       (unsigned long)(millis() / 1000UL), FW_VERSION);
 }
 
 // Nextion page 1 buttons: keep the local UI and the web UI in sync.
@@ -904,6 +914,7 @@ static void measureAtCurrent() {
   }
 
   NextionUI::addReading(g_angle, distance);
+  St7735UI::addReading(g_angle, distance);
 
   char buf[80];
   int n = snprintf(buf, sizeof(buf), "{\"a\":%d,\"d\":%d,\"mx\":%d}",
@@ -1033,6 +1044,7 @@ void setup() {
   NextionUI::setCallbacks(onNextionRange, onNextionPause);
   NextionUI::setCommandCallback(onNextionCommand);
   NextionUI::begin();
+  St7735UI::begin();
 
   Serial.println("------------------------------------------");
   Serial.println("AP+STA mode. HTTP :80, WebSocket :81");
@@ -1054,6 +1066,7 @@ void loop() {
   webSocket.loop();
   ArduinoOTA.handle();
   NextionUI::loop();
+  St7735UI::loop();
 
   if (g_rebootAt && (long)(millis() - g_rebootAt) >= 0) {
     Serial.println("Rebooting...");

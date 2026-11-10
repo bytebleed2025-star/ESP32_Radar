@@ -32,6 +32,7 @@ backdrop and header logo (served as `web/logo.jpg`).
   saved in NVS and applied at boot
 - **OTA updates** — web upload from the Config tab and ArduinoOTA on port 3232
 - Optional **Nextion NX3224T028** local UI on UART2 (modern card theme: welcome animation, radar, control and info pages) while the web UI keeps running
+- **ST7735 128×160 SPI display** branch (`feature/st7735-display`) for a display-only local radar — see [`st7735/README.md`](st7735/README.md)
 - Automatic browser reconnect, full-screen mode, optional sonar ping sound
 - Responsive layout for phone, tablet and desktop
 - `?demo=1` simulation mode — preview the UI with no hardware
@@ -48,6 +49,7 @@ backdrop and header logo (served as `web/logo.jpg`).
 │  ├─ nextion_ui.h             Nextion UART2 driver + radar drawing
 │  └─ web_assets.h             auto-generated embedded UI
 ├─ nextion/                    Nextion TFT, nxwright source, guide + renders
+├─ st7735/                     ST7735 display branch guide
 ├─ web/
 │  ├─ index.html               editable radar UI (CSS + JS inline)
 │  └─ logo.jpg                 background/logo image
@@ -530,10 +532,10 @@ directly.
 
 - **Arduino IDE / arduino-cli** — ESP32 core **3.3.12**, ESP32Servo **3.2.1**,
   WebSockets **2.7.2**, partition scheme `min_spiffs` (1.9 MB OTA slot):
-  **1,163,490 bytes (59%) flash**, **55,144 bytes (16%) RAM**
+  **1,199,282 bytes (60%) flash**, **54,616 bytes (16%) RAM**
 - **PlatformIO Core 6.2.0** — `espressif32@7.0.1` (Arduino core 2.0.17),
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
-  **999,633 bytes (50.8%) flash**, **52,520 bytes (16.0%) RAM**
+  **1,020,097 bytes (51.9%) flash**, **51,956 bytes (15.9%) RAM**
 - **Nextion** — nxwright 0.2.5 + Nextion Editor 1.68.2 firmware →
   `nextion/NX3224T028.tft` (**1,231,936 bytes**); page RAM
   260 + 452 + 44 + 528 of 3584 bytes
