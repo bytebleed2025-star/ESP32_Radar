@@ -67,5 +67,5 @@ ESP8266Audio is GPL-3.0; the firmware/source must be distributed together.
 ## Build result
 
 - PlatformIO: **1,273,969 bytes (64.8%)**, RAM **51,336 (15.7%)**
-- Arduino: **1,463,006 bytes (74%)**, RAM **54,464 (16%)** (before the servo library removal)
+- Arduino: **1,460,267 bytes (74%)**, RAM **54,136 (16%)**
 - Arduino IDE needs TFT_eSPI and ESP8266Audio 1.9.9 installed.
