@@ -563,10 +563,10 @@ directly.
 
 - **Arduino IDE / arduino-cli** — ESP32 core **3.3.12**, ESP32Servo **3.2.1**,
   WebSockets **2.7.2**, partition scheme `min_spiffs` (1.9 MB OTA slot):
-  **1,463,006 bytes (74%) flash**, **54,464 bytes (16%) RAM**
+  **1,460,491 bytes (74%) flash**, **54,136 bytes (16%) RAM**
 - **PlatformIO Core 6.2.0** — `espressif32@7.0.1` (Arduino core 2.0.17),
   ESP32Servo **3.2.1**, WebSockets **2.7.3**, `min_spiffs.csv`:
-  **1,273,969 bytes (64.8%) flash**, **51,336 bytes (15.7%) RAM**
+  **1,274,177 bytes (64.8%) flash**, **51,336 bytes (15.7%) RAM**
 - **Nextion** — nxwright 0.2.5 + Nextion Editor 1.68.2 firmware →
   `nextion/NX3224T028.tft` (**1,231,936 bytes**); page RAM
   260 + 452 + 44 + 528 of 3584 bytes

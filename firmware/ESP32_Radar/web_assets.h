@@ -4,7 +4,7 @@
 #pragma once
 #include <pgmspace.h>
 
-static const unsigned int INDEX_HTML_LEN = 80769;
+static const unsigned int INDEX_HTML_LEN = 80986;
 static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 <!DOCTYPE html>
 <html lang="id">
@@ -319,10 +319,13 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 
   /* ---------- radar ---------- */
   .scope-wrap{
-    position:relative; min-width:0; min-height:0;
+    position:relative; min-width:0; min-height:0; max-width:100%;
     display:block;
   }
-  #scope{ position:absolute; inset:0; display:block; }
+  #scope{
+    position:absolute; inset:0; display:block;
+    width:100%; height:100%; max-width:100%; max-height:100%;
+  }
   .scope-badge{
     position:absolute; top:6px; left:8px;
     font-size:8px; letter-spacing:.22em; color:rgba(88,255,161,.5);
@@ -1680,8 +1683,9 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.round(W * DPR);
     canvas.height = Math.round(H * DPR);
-    canvas.style.width = W + "px";
-    canvas.style.height = H + "px";
+    // CSS keeps the canvas exactly inside the square wrapper; only the
+    // backing store is resized here. This prevents the scope from ever
+    // overflowing or drifting off-centre on narrow phones.
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     cx = W / 2;
     cy = H / 2;
