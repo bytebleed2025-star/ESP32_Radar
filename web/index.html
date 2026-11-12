@@ -32,9 +32,9 @@
   /* ---------- layered background ---------- */
   .bg{
     position:fixed; inset:0; z-index:0;
-    background: url("logo.jpg") center center / cover no-repeat;
-    filter: saturate(1.15) brightness(.62) blur(.4px);
-    opacity:.34;
+    background: url("bg.jpg") center center / cover no-repeat;
+    filter: saturate(1.15) brightness(.72) blur(.4px);
+    opacity:.46;
     transform: scale(1.04);
   }
   .bg-tint{
@@ -205,6 +205,25 @@
     box-shadow:0 0 14px rgba(88,255,161,.12);
   }
   .hand-hint{ font-size:8px; line-height:1.5; color:rgba(185,255,214,.35); letter-spacing:.03em; }
+
+  /* v2.0: no servo controls */
+  .v2 .mode-switch,
+  .v2 #speed-wrap,
+  .v2 #angle-wrap,
+  .v2 #jog-row,
+  .v2 #pause,
+  .v2 #hand-move,
+  .v2 #buzzer { display:none !important; }
+
+  .prox-card{
+    display:flex; flex-direction:column; gap:8px;
+    padding:10px 12px; border:1px solid rgba(88,255,161,.22);
+    border-radius:10px; background:rgba(88,255,161,.04);
+  }
+  .prox-top{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+  .prox-top span{ font-size:8px; letter-spacing:.14em; color:rgba(185,255,214,.55); }
+  .prox-top small{ font-size:7px; color:rgba(88,255,161,.4); }
+  .prox-top b{ font-size:22px; line-height:1; color:var(--green-bright); font-weight:500; }
   .hold-btn{
     height:42px; flex:0 0 100%;
     border-color:rgba(255,200,87,.45);
@@ -559,7 +578,7 @@
   }
 </style>
 </head>
-<body>
+<body class="v2">
   <div class="bg" aria-hidden="true"></div>
   <div class="bg-tint" aria-hidden="true"></div>
   <div class="bg-grid" aria-hidden="true"></div>
@@ -630,8 +649,8 @@
 
       <section class="scope-wrap" id="scope-wrap">
         <canvas id="scope"></canvas>
-        <div class="scope-badge" id="scope-badge">PPI · 180°</div>
-        <div class="scope-note" id="scope-note">RANGE — CM<br/>STEP —°</div>
+        <div class="scope-badge" id="scope-badge">SONAR · FIXED</div>
+        <div class="scope-note" id="scope-note">RANGE — CM<br/>FIXED DIRECTION</div>
         <div class="offline" id="offline">SINYAL TERPUTUS<small>mencoba menyambung ulang…</small></div>
       </section>
 
@@ -666,7 +685,7 @@
           <input id="thr" type="range" min="10" max="150" step="5" value="50"/>
         </label>
 
-        <label class="slider">
+        <label class="slider" id="speed-wrap">
           <div class="slider-top"><span>KECEPATAN <small>STEP</small></span><b><span id="speed-val">2</span>°</b></div>
           <input id="speed" type="range" min="1" max="5" step="1" value="2"/>
         </label>
@@ -675,6 +694,14 @@
           <button class="btn" id="pause"><span id="pause-label">JEDA</span></button>
           <button class="btn ghost" id="sound">SUARA: OFF</button>
           <button class="btn" id="buzzer">BUZZER: ON</button>
+        </div>
+
+        <div class="prox-card">
+          <div class="prox-top">
+            <span>PROXIMITY <small>INDUCTIVE</small></span>
+            <b id="prox-count">0</b>
+          </div>
+          <button class="btn ghost" id="prox-reset">RESET COUNTER</button>
         </div>
 
         <div class="panel-head sub-head"><span>TAUTAN</span><i>03</i></div>
@@ -689,17 +716,17 @@
 
         <div class="panel-head sub-head"><span>SENSOR</span><i>04</i></div>
         <div class="lines">
-          <div><span>JENIS</span><b>HC-SR04 · MG995</b></div>
-          <div><span>SEKTOR</span><b>180°</b></div>
-          <div><span>TARGET</span><b id="servo-target">AUTO</b></div>
-          <div><span>STATUS</span><b id="scan-state">MENYAPU</b></div>
+          <div><span>JENIS</span><b>HC-SR04 · FIXED</b></div>
+          <div><span>SEKTOR</span><b>FIXED</b></div>
+          <div><span>INDUCTIVE</span><b>NO</b></div>
+          <div><span>STATUS</span><b id="scan-state">MEASURING</b></div>
           <div><span>PING</span><b id="pings">0</b></div>
         </div>
 
         <div class="guide">
           <p><b>01</b> Kontak kuning berada di bawah ambang air.</p>
-          <p><b>02</b> AUTO menyapu 180°; HAND mengunci sudut manual.</p>
-          <p><b>03</b> JEDA / STOP membekukan servo. BUZZER mengikuti ambang air.</p>
+          <p><b>02</b> Sensor induktif menambah counter setiap deteksi baru.</p>
+          <p><b>03</b> Reset counter lewat tombol fisik atau tombol web. Audio berbunyi saat deteksi.</p>
         </div>
       </aside>
     </main>
@@ -799,7 +826,7 @@
     </section>
 
     <footer>
-      <span>HC-SR04 · SERVO 180° · <b>ESP32</b></span>
+      <span>HC-SR04 · FIXED · INDUCTIVE · <b>ESP32</b></span>
       <span class="f-brand">LACAK — SOLUSI PINTAR</span>
       <span>TAMBAH <b>?demo=1</b> UNTUK SIMULASI</span>
     </footer>
@@ -845,6 +872,7 @@
     dir: 1,
     blips: [],
     threshold: 50,
+    prox: 0,
     sound: false,
     lastEcho: null,
     status: null,
@@ -1376,8 +1404,8 @@
     updateNote();
   }
   function updateNote(){
-    $("scope-note").innerHTML = "RANGE " + S.maxRange + " CM<br/>STEP " + S.step + "° · " +
-      (S.hand ? "HAND" : "AUTO") + (S.demo ? " · SIMULASI" : "");
+    $("scope-note").innerHTML = "RANGE " + S.maxRange + " CM<br/>FIXED DIRECTION" +
+      (S.demo ? " · SIMULASI" : "");
   }
   function syncThresholdUI(){
     $("thr").value = S.threshold;
@@ -1386,8 +1414,6 @@
   function syncManualUI(){
     $("angle").value = S.manual;
     $("angle-val").textContent = S.manual;
-    var t = $("servo-target");
-    if (t) t.textContent = S.hand ? (S.manual + "°") : "AUTO";
   }
   function updatePauseUI(){
     var b = $("pause"), l = $("pause-label");
@@ -1398,7 +1424,7 @@
       if (st) st.textContent = S.holding ? "GERAK MANUAL" :
                                (S.paused ? "SIAP" : "POSISI");
     } else {
-      if (st) st.textContent = S.paused ? "DIJEDA" : "MENYAPU";
+      if (st) st.textContent = S.paused ? "STOP" : "MEASURING";
     }
     if (S.paused){ b.classList.add("active"); l.textContent = "LANJUT"; }
     else { b.classList.remove("active"); l.textContent = "JEDA"; }
@@ -1419,6 +1445,10 @@
     b.textContent = "BUZZER: " + (S.buzzer ? "ON" : "OFF");
     b.classList.toggle("ghost", !S.buzzer);
   }
+  function updateProxUI(){
+    var el = $("prox-count");
+    if (el) el.textContent = S.prox;
+  }
   function updateSoundUI(){
     var b = $("sound");
     b.textContent = "SUARA: " + (S.sound ? "ON" : "OFF");
@@ -1433,10 +1463,16 @@
       if (typeof m.ta === "number") S.manual = clamp(m.ta, 0, 180);
       if (typeof m.bz === "number") S.buzzer = !!m.bz;
       if (typeof m.thr === "number") S.threshold = clamp(m.thr, 10, 150);
+      if (typeof m.pc === "number") S.prox = m.pc;
       S.paused = !!m.p;
       if (S.paused) cancelHandHold(false);
       syncRangeUI(); syncSpeedUI(); syncThresholdUI(); syncManualUI();
-      updateModeUI(); updateBuzzerUI();
+      updateModeUI(); updateBuzzerUI(); updateProxUI();
+      return;
+    }
+    if (typeof m.pc === "number") {
+      S.prox = m.pc;
+      updateProxUI();
       return;
     }
     if (m.st){ updateStatus(m); return; }
@@ -1938,8 +1974,8 @@
     if (water && !S.wasWater) ping(1040, 0.30, 0.11);
     S.wasWater = water;
 
-    $("scope-badge").textContent = "PPI · " + (S.hand ? "HAND" : "180°") +
-      (S.demo ? " · DEMO" : (S.paused ? (S.hand ? " · STOP" : " · JEDA") : ""));
+    $("scope-badge").textContent = "SONAR · FIXED" +
+      (S.demo ? " · DEMO" : (S.paused ? " · STOP" : ""));
     drawHistory();
   }
 
@@ -2103,6 +2139,13 @@
       toast(S.buzzer ? "BUZZER ON" : "BUZZER OFF");
     });
 
+    $("prox-reset").addEventListener("click", function(){
+      S.prox = 0;
+      updateProxUI();
+      send("C0");
+      toast("PROXIMITY COUNTER RESET");
+    });
+
     $("sound").addEventListener("click", function(){
       S.sound = !S.sound;
       updateSoundUI();
@@ -2145,6 +2188,7 @@
     bindConfigUI();
     updateModeUI();
     updateBuzzerUI();
+    updateProxUI();
     updateSoundUI();
     updateNote();
     setLink(DEMO ? "demo" : "connecting");

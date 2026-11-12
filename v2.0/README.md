@@ -21,6 +21,7 @@ Branch: `v2.0` (based on the ST7735 display branch)
 | MAX98357A GND | GND | common ground |
 | Inductive sensor output | GPIO 34 | NPN open collector, 10 kΩ pull-up to 3.3 V, 1 kΩ series |
 | Inductive sensor supply | 6–36 V sensor rating | common GND required |
+| Physical reset button | GPIO 33 | button to GND, internal pull-up |
 
 No servo is used. The HC-SR04 measures continuously in one fixed direction.
 
@@ -41,18 +42,30 @@ input-only and needs the external pull-up.
 
 ## Behaviour
 
-- Measure distance at a fixed interval.
-- Show distance and proximity count on the ST7735.
-- Count each new inductive detection (debounced).
-- Save the count in NVS so it survives reboot.
-- Reset the counter from the web UI.
-- Play a WAV/MP3 alert through MAX98357A on each detection.
+- HC-SR04 measures continuously in one fixed direction.
+- ST7735 shows the boot logo for 1.5 s, then distance and proximity count.
+- The provided droplet artwork is an outline normally and fills with a green
+  gradient when a contact is inside the alert threshold.
+- Each new inductive detection increments and saves the counter in NVS.
+- Reset the counter with the **physical button on GPIO33** or the
+  **RESET COUNTER** button in the web UI.
+- Each detection plays the embedded **MP3** alert through the MAX98357A.
+  A WAV version is embedded too; switch with `PROX_AUDIO_USE_MP3`.
 - Web UI and OTA remain available.
-- ST7735 background and web background will be replaced with the supplied
-  artwork.
+- Web background uses `web/bg.jpg`; the header logo remains `web/logo.jpg`.
 
-## Pending decisions
+## Audio files
 
-1. Audio storage: microSD card for MP3/WAV, or audio embedded in ESP32 flash?
-2. Inductive sensor output: NO or NC?
-3. Background artwork: ST7735 128×160 PNG + web background image.
+```text
+firmware/ESP32_Radar/audio_prox.h   embedded MP3 + WAV arrays
+firmware/ESP32_Radar/prox_alert.mp3 reference MP3
+firmware/ESP32_Radar/prox_alert.wav reference WAV
+```
+
+ESP8266Audio is GPL-3.0; the firmware/source must be distributed together.
+
+## Build result
+
+- PlatformIO: **1,273,969 bytes (64.8%)**, RAM **51,336 (15.7%)**
+- Arduino: **1,463,006 bytes (74%)**, RAM **54,464 (16%)** (before the servo library removal)
+- Arduino IDE needs TFT_eSPI and ESP8266Audio 1.9.9 installed.

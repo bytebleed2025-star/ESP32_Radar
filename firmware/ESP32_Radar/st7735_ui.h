@@ -1,20 +1,14 @@
 #pragma once
 
 /*
- * ST7735 local radar display (no touch).
+ * v2.0 ST7735 160x128 local display (landscape, no touch).
  *
- * Wiring defaults (change in platformio.ini + here if needed):
- *   SCLK 14, MOSI 13, CS 27, DC 26, RST 25, BL 32
- *   VCC 3.3 V, GND common
- *
- * The ST7735 is display-only. Servo mode, angle, buzzer and OTA remain in
- * the web UI; this screen shows the radar and live readouts.
+ * SCLK 14, MOSI 13, CS 27, DC 26, RST 25, BL 32
+ * The HC-SR04 is fixed-direction; there is no servo.
  */
 
 #include <Arduino.h>
 
-// Arduino IDE builds get the same ST7735 setup from here; PlatformIO supplies
-// these through build_flags in platformio.ini.
 #ifndef USER_SETUP_LOADED
 #define USER_SETUP_LOADED 1
 #define ST7735_DRIVER 1
@@ -40,131 +34,58 @@
 
 #include <TFT_eSPI.h>
 
-#ifndef ST7735_ENABLED
-#define ST7735_ENABLED 1
-#endif
+#include "st7735_logo.h"
+#include "st7735_drop_off.h"
+#include "st7735_drop_on.h"
 
-#define ST7735_WIDTH   128
-#define ST7735_HEIGHT  160
-#define ST7735_ROTATION 0
+#define ST7735_WIDTH  160
+#define ST7735_HEIGHT 128
+#define ST7735_ROTATION 1
 
-#if ST7735_HEIGHT >= 160
-#define ST_RADAR_CY 110
-#define ST_RADAR_R  40
-#define ST_RADAR_Y  70
-#define ST_RADAR_BOTTOM 151
-#else
-#define ST_RADAR_CY 92
-#define ST_RADAR_R  26
-#define ST_RADAR_Y  64
-#define ST_RADAR_BOTTOM 119
-#endif
-
-#define ST_BLIP_COUNT 48
-#define ST_BLIP_LIFE  8000UL
-
-#if ST7735_ENABLED
+#define ST_ICON_X 70
+#define ST_ICON_Y 32
+#define ST_ICON_W 80
+#define ST_ICON_H 82
 
 namespace St7735UI {
 
 static TFT_eSPI tft;
 
-struct Blip {
-  uint8_t angle;
-  uint16_t dist;
-  uint32_t t;
-};
-static Blip g_blips[ST_BLIP_COUNT];
-static uint8_t g_blipHead = 0;
-
-static int      g_angle = 0;
 static int      g_dist = 0;
-static int      g_near = 0;
 static int      g_maxRange = 200;
 static int      g_alertCm = 50;
-static bool     g_paused = false;
-static bool     g_hand = false;
-static int      g_target = 90;
-static int      g_step = 2;
-static bool     g_buzzer = true;
-static bool     g_dirty = true;
-static uint32_t g_nextDrawMs = 0;
-static uint32_t g_nextTextMs = 0;
+static uint32_t g_count = 0;
+static bool     g_filled = true;   // force the first icon draw
+static int      g_lastShownDist = -1;
+static uint32_t g_lastShownCount = 0xFFFFFFFF;
+static bool     g_lastShownDetect = false;
+static uint32_t g_nextMs = 0;
 
-// ---------------------------------------------------------------------------
-//  Colours and small drawing helpers
-// ---------------------------------------------------------------------------
-static const uint16_t C_BG      = 0x0841;  // #08130D
-static const uint16_t C_PANEL   = 0x18E3;  // #10271A
-static const uint16_t C_GREEN   = 0x5FE4;  // #58FFA1
-static const uint16_t C_DIM     = 0x3A8C;  // #1E7A4C
-static const uint16_t C_TEXT    = 0xEFFF;  // #E6FFF0
-static const uint16_t C_AMBER   = 0xFE0B;  // #FFC857
+static const uint16_t C_BG    = 0x0841;
+static const uint16_t C_GREEN = 0x5FE4;
+static const uint16_t C_TEXT  = 0xEFFF;
+static const uint16_t C_DIM   = 0x3A8C;
+static const uint16_t C_AMBER = 0xFE0B;
 
-static int nearestCm(uint32_t now) {
-  int best = 0;
-  for (uint8_t i = 0; i < ST_BLIP_COUNT; i++) {
-    const Blip &b = g_blips[i];
-    if (b.dist == 0) continue;
-    if ((uint32_t)(now - b.t) > ST_BLIP_LIFE) continue;
-    if (best == 0 || b.dist < best) best = b.dist;
-  }
-  return best;
+static bool objectSeen() {
+  return g_dist > 0;
 }
 
-// ---------------------------------------------------------------------------
-//  Radar
-// ---------------------------------------------------------------------------
-static void drawRadar() {
-  uint32_t now = millis();
-
-  tft.fillRect(0, ST_RADAR_Y, ST7735_WIDTH, ST_RADAR_BOTTOM - ST_RADAR_Y, TFT_BLACK);
-
-  int cx = ST7735_WIDTH / 2;
-  int cy = ST_RADAR_CY;
-  int r  = ST_RADAR_R;
-
-  for (int i = 1; i <= 4; i++) {
-    tft.drawCircle(cx, cy, r * i / 4, (i == 4) ? C_DIM : 0x10A2);
-  }
-
-  tft.drawLine(cx - r, cy, cx + r, cy, C_DIM);
-  tft.drawLine(cx, cy - r, cx, cy + r, C_DIM);
-
-  for (int a = 30; a < 180; a += 30) {
-    float rad = (180.0f + a) * PI / 180.0f;
-    int x1 = cx + (int)(cosf(rad) * r);
-    int y1 = cy + (int)(sinf(rad) * r);
-    int x2 = cx + (int)(cosf(rad) * (r - 4));
-    int y2 = cy + (int)(sinf(rad) * (r - 4));
-    tft.drawLine(x1, y1, x2, y2, C_DIM);
-  }
-
-  for (uint8_t i = 0; i < ST_BLIP_COUNT; i++) {
-    const Blip &b = g_blips[i];
-    if (b.dist == 0) continue;
-    if ((uint32_t)(now - b.t) > ST_BLIP_LIFE) continue;
-
-    float rr = (float)b.dist / (float)max(1, g_maxRange) * r;
-    if (rr > r) rr = r;
-    float rad = (180.0f + b.angle) * PI / 180.0f;
-    int x = cx + (int)(cosf(rad) * rr);
-    int y = cy + (int)(sinf(rad) * rr);
-    uint16_t col = (b.dist <= g_alertCm) ? C_AMBER : C_GREEN;
-    tft.fillCircle(x, y, (b.dist <= g_alertCm) ? 2 : 1, col);
-  }
-
-  float srad = (180.0f + g_angle) * PI / 180.0f;
-  int sx = cx + (int)(cosf(srad) * r);
-  int sy = cy + (int)(sinf(srad) * r);
-  tft.drawLine(cx, cy, sx, sy, C_GREEN);
-  tft.fillCircle(cx, cy, 2, C_GREEN);
+static bool waterAlert() {
+  return g_dist > 0 && g_dist <= g_alertCm;
 }
 
-// ---------------------------------------------------------------------------
-//  Text
-// ---------------------------------------------------------------------------
-static void drawHeader() {
+static void drawIcon() {
+  bool on = objectSeen();
+  if (on == g_filled) return;
+  g_filled = on;
+  tft.pushImage(ST_ICON_X, ST_ICON_Y, ST_ICON_W, ST_ICON_H,
+                on ? ST7735_DROP_ON : ST7735_DROP_OFF);
+}
+
+static void drawText() {
+  bool on = waterAlert();
+
   tft.fillRect(0, 0, ST7735_WIDTH, 20, C_BG);
   tft.setTextDatum(TL_DATUM);
   tft.setTextFont(2);
@@ -172,120 +93,77 @@ static void drawHeader() {
   tft.drawString("DETEKTOR AIR", 4, 2);
 
   tft.setTextFont(1);
-  tft.setTextColor(g_hand ? C_AMBER : C_GREEN, C_BG);
-  tft.drawString(g_hand ? "HAND" : "AUTO", 100, 5);
-}
+  tft.setTextColor(C_DIM, C_BG);
+  tft.drawString("P", 132, 2);
+  tft.setTextColor(C_GREEN, C_BG);
+  tft.drawString(String(g_count), 142, 2);
 
-static void drawData() {
-  tft.fillRect(0, 20, ST7735_WIDTH, 48, C_BG);
-
-  tft.setTextDatum(TL_DATUM);
+  tft.fillRect(0, 20, 62, 52, C_BG);
   tft.setTextFont(1);
   tft.setTextColor(C_DIM, C_BG);
-  tft.drawString("DIST", 4, 22);
-  tft.drawString("ANGLE", 46, 22);
-  tft.drawString("NEAR", 88, 22);
-
-  tft.setTextFont(2);
-  tft.setTextColor(C_TEXT, C_BG);
-  tft.drawString(String(g_dist), 4, 31);
-  tft.drawString(String(g_angle), 46, 31);
-  tft.drawString(String(g_near), 88, 31);
-
-  bool water = (g_near > 0 && g_near <= g_alertCm);
+  tft.drawString("DIST", 4, 21);
+  tft.setTextFont(4);
+  tft.setTextColor(on ? C_AMBER : C_TEXT, C_BG);
+  tft.drawString(String(g_dist), 4, 29);
   tft.setTextFont(1);
-  tft.setTextColor(water ? C_AMBER : C_GREEN, C_BG);
-  tft.drawString(water ? "AIR TERDETEKSI" : "AREA BERSIH", 4, 50);
-}
-
-static void drawFooter() {
-  tft.fillRect(0, ST7735_HEIGHT - 9, ST7735_WIDTH, 9, C_BG);
-  tft.setTextFont(1);
-  tft.setTextDatum(TL_DATUM);
   tft.setTextColor(C_DIM, C_BG);
-  tft.drawString(String("R ") + g_maxRange + " S " + g_step +
-                 (g_paused ? " STOP" : ""), 4, ST7735_HEIGHT - 9);
+  tft.drawString("cm", 4, 58);
+
+  tft.fillRect(0, 116, ST7735_WIDTH, 12, C_BG);
+  tft.setTextFont(1);
+  tft.setTextColor(on ? C_AMBER : C_GREEN, C_BG);
+  tft.drawString(on ? "AIR TERDETEKSI" : "AREA BERSIH", 4, 117);
+
+  tft.setTextColor(C_DIM, C_BG);
+  tft.drawString(String("MAX ") + g_maxRange, 116, 117);
 }
 
-// ---------------------------------------------------------------------------
-//  Public API
-// ---------------------------------------------------------------------------
 inline void begin() {
   tft.init();
   tft.setRotation(ST7735_ROTATION);
   tft.fillScreen(C_BG);
-  tft.setTextWrap(false);
-  drawHeader();
-  drawData();
-  drawFooter();
-  g_dirty = true;
+
+  tft.pushImage(0, 0, ST7735_WIDTH, ST7735_HEIGHT, ST7735_BOOT_LOGO);
+  delay(1500);
+  tft.fillScreen(C_BG);
+
+  drawIcon();
+  drawText();
+  g_lastShownDist = g_dist;
+  g_lastShownCount = g_count;
+  g_lastShownDetect = objectSeen();
 }
 
-inline void addReading(int angle, int distance) {
-  g_angle = constrain(angle, 0, 180);
-  if (distance > 0) {
-    g_dist = distance;
-    Blip &b = g_blips[g_blipHead];
-    b.angle = (uint8_t)g_angle;
-    b.dist = (uint16_t)constrain(distance, 0, 2000);
-    b.t = millis();
-    g_blipHead = (g_blipHead + 1) % ST_BLIP_COUNT;
-  }
-  g_dirty = true;
-}
-
-inline void setConfig(int maxRange, bool paused, int alertCm,
-                      bool hand, int target, int step, bool buzzer) {
+inline void setConfig(int maxRange, int alertCm) {
   g_maxRange = constrain(maxRange, 40, 400);
-  g_paused = paused;
   g_alertCm = constrain(alertCm, 10, 150);
-  g_hand = hand;
-  g_target = constrain(target, 0, 180);
-  g_step = constrain(step, 1, 5);
-  g_buzzer = buzzer;
-  g_dirty = true;
+  g_lastShownDist = -1;
+  g_lastShownCount = 0xFFFFFFFF;
 }
 
-inline void setNetwork(const char *, const char *, const char *, int,
-                       unsigned long, const char *) {
-  // The small ST7735 page is radar-only; network details remain in the web UI.
+inline void addReading(int distance) {
+  g_dist = distance > 0 ? distance : 0;
+}
+
+inline void setProximity(uint32_t count) {
+  g_count = count;
 }
 
 inline void loop() {
   uint32_t now = millis();
-  int near = nearestCm(now);
-  if (near != g_near) {
-    g_near = near;
-    g_dirty = true;
+  bool on = objectSeen();
+  if (g_dist != g_lastShownDist || g_count != g_lastShownCount ||
+      on != g_lastShownDetect) {
+    if (on != g_lastShownDetect) drawIcon();
+    drawText();
+    g_lastShownDist = g_dist;
+    g_lastShownCount = g_count;
+    g_lastShownDetect = on;
   }
-
-  if ((int32_t)(now - g_nextTextMs) >= 0) {
-    g_nextTextMs = now + 250;
-    if (g_dirty) {
-      drawHeader();
-      drawData();
-      drawFooter();
-      g_dirty = false;
-    }
-  }
-
-  if ((int32_t)(now - g_nextDrawMs) >= 0) {
-    g_nextDrawMs = now + 120;   // ~8 FPS PPI
-    drawRadar();
+  if ((int32_t)(now - g_nextMs) >= 0) {
+    g_nextMs = now + 250;
+    drawIcon();
   }
 }
 
 }  // namespace St7735UI
-
-#else  // ST7735_ENABLED
-
-namespace St7735UI {
-inline void begin() {}
-inline void addReading(int, int) {}
-inline void setConfig(int, bool, int, bool, int, int, bool) {}
-inline void setNetwork(const char *, const char *, const char *, int,
-                       unsigned long, const char *) {}
-inline void loop() {}
-}
-
-#endif

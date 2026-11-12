@@ -24,6 +24,7 @@ RAW_DELIM = "LACAKIDX"
 def main() -> int:
     html_path = WEB / "index.html"
     logo_path = WEB / "logo.jpg"
+    bg_path = WEB / "bg.jpg"
 
     if not html_path.exists():
         print(f"ERROR: {html_path} not found", file=sys.stderr)
@@ -31,9 +32,13 @@ def main() -> int:
     if not logo_path.exists():
         print(f"ERROR: {logo_path} not found", file=sys.stderr)
         return 1
+    if not bg_path.exists():
+        print(f"ERROR: {bg_path} not found", file=sys.stderr)
+        return 1
 
     html = html_path.read_text(encoding="utf-8")
     logo = logo_path.read_bytes()
+    bg = bg_path.read_bytes()
 
     html_bytes = html.encode("utf-8")
     if f'){RAW_DELIM}"' in html:
@@ -45,7 +50,7 @@ def main() -> int:
 
     out = []
     out.append("// AUTO-GENERATED FILE - do not edit by hand.")
-    out.append("// Source: web/index.html + web/logo.jpg")
+    out.append("// Source: web/index.html + web/logo.jpg + web/bg.jpg")
     out.append("// Regenerate with: python tools/build_assets.py")
     out.append("#pragma once")
     out.append("#include <pgmspace.h>")
@@ -64,6 +69,15 @@ def main() -> int:
         out.append(f"  {row}{comma}")
     out.append("};")
     out.append("")
+    out.append(f"static const unsigned int BG_JPG_LEN = {len(bg)};")
+    out.append("static const uint8_t BG_JPG[] PROGMEM = {")
+    for offset in range(0, len(bg), 18):
+        chunk = bg[offset : offset + 18]
+        row = ", ".join(f"0x{byte:02X}" for byte in chunk)
+        comma = "," if offset + 18 < len(bg) else ""
+        out.append(f"  {row}{comma}")
+    out.append("};")
+    out.append("")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(out), encoding="utf-8", newline="\n")
@@ -71,6 +85,7 @@ def main() -> int:
     print(f"Wrote {OUT}")
     print(f"  index.html : {len(html_bytes):,} bytes")
     print(f"  logo.jpg   : {len(logo):,} bytes")
+    print(f"  bg.jpg     : {len(bg):,} bytes")
     print(f"  header     : {OUT.stat().st_size:,} bytes")
     return 0
 

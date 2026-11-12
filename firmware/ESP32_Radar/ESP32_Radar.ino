@@ -26,7 +26,6 @@
  *
  *  Libraries (Arduino IDE -> Library Manager)
  *  ------------------------------------------
- *    - ESP32Servo        by Kevin Harrington
  *    - WebSockets        by Markus Sattler (links2004)
  *
  *  Board: "ESP32 Dev Module"
@@ -57,7 +56,6 @@
 #include <esp_ota_ops.h>
 #include <ArduinoOTA.h>
 #include <WebSocketsServer.h>
-#include <ESP32Servo.h>
 
 #include "web_assets.h"
 
@@ -67,6 +65,9 @@
 
 #define ST7735_ENABLED 1
 #include "st7735_ui.h"
+
+#include "proximity.h"
+#include "audio_player.h"
 
 /* --------------------------------------------------------------------------
  *  VERSION
@@ -94,16 +95,13 @@ const char *OTA_PASSWORD = "lacakota";
 // Pins
 #define PIN_TRIG   5
 #define PIN_ECHO  18
-#define PIN_SERVO 19
-#define PIN_BUZZER 23       // active buzzer output
+#define PIN_BUZZER 23       // legacy buzzer pin, unused in v2.0
 
 // 1 = active buzzer (HIGH = sound), 0 = passive buzzer (tone)
 #define BUZZER_ACTIVE 1
 #define BUZZER_TONE_HZ 2200
 
-// SG90 safe mechanical limits. The UI always reports logical 0..180 degrees.
-#define SERVO_LEFT   12
-#define SERVO_RIGHT 168
+
 
 /* --------------------------------------------------------------------------
  *  SCAN DEFAULTS
@@ -113,13 +111,12 @@ static int     maxRangeCm = 200;   // 40 .. 400 cm
 static uint8_t stepDeg    = 2;     // 1 .. 5 degrees per ping
 
 static const uint16_t STEP_SETTLE_MS   = 16;
-static const uint16_t STEP_INTERVAL_MS = 36;
+static const uint16_t STEP_INTERVAL_MS = 100;
 
 /* --------------------------------------------------------------------------
  *  GLOBALS
  * ------------------------------------------------------------------------ */
 
-Servo servo;
 WebServer server(80);
 WebSocketsServer webSocket(81);
 Preferences prefs;
@@ -143,7 +140,7 @@ static unsigned long g_lastNearMs   = 0;
 static unsigned long g_buzzerToggleMs = 0;
 static unsigned long g_lastHandPingMs = 0;
 static int  g_lastMeasurement = 0;
-static int  g_angle          = 0;
+static int  g_angle          = 90;   // fixed direction in v2.0
 static int  g_direction      = 1;
 static unsigned long g_lastStepMs   = 0;
 static unsigned long g_lastStatusMs = 0;
@@ -292,9 +289,7 @@ static float pingCm() {
   return cm;
 }
 
-static int servoPosFor(int logical) {
-  return map(constrain(logical, 0, 180), 0, 180, SERVO_LEFT, SERVO_RIGHT);
-}
+
 
 /* --------------------------------------------------------------------------
  *  NETWORK
@@ -361,11 +356,12 @@ static void sendConfig(uint8_t num) {
   char buf[128];
   int n = snprintf(buf, sizeof(buf),
                    "{\"cfg\":1,\"mx\":%d,\"s\":%u,\"p\":%u,\"hm\":%u,"
-                   "\"ta\":%d,\"bz\":%u,\"thr\":%d}",
+                   "\"ta\":%d,\"bz\":%u,\"thr\":%d,\"pc\":%lu}",
                    maxRangeCm, (unsigned)stepDeg, g_paused ? 1u : 0u,
                    g_handMode ? 1u : 0u,
                    g_handMode ? g_manualTarget : g_angle,
-                   g_buzzerEnabled ? 1u : 0u, g_alertCm);
+                   g_buzzerEnabled ? 1u : 0u, g_alertCm,
+                   (unsigned long)Proximity::count());
   if (num == 255) webSocket.broadcastTXT(buf, n);
   else            webSocket.sendTXT(num, buf, n);
 
@@ -373,10 +369,16 @@ static void sendConfig(uint8_t num) {
                        g_handMode,
                        g_handMode ? g_manualTarget : g_angle,
                        stepDeg, g_buzzerEnabled);
-  St7735UI::setConfig(maxRangeCm, g_paused, g_alertCm,
-                      g_handMode,
-                      g_handMode ? g_manualTarget : g_angle,
-                      stepDeg, g_buzzerEnabled);
+  St7735UI::setConfig(maxRangeCm, g_alertCm);
+  St7735UI::setProximity(Proximity::count());
+}
+
+static void broadcastProx() {
+  char buf[32];
+  int n = snprintf(buf, sizeof(buf), "{\"pc\":%lu}",
+                   (unsigned long)Proximity::count());
+  webSocket.broadcastTXT(buf, n);
+  St7735UI::setProximity(Proximity::count());
 }
 
 static void sendStatus() {
@@ -400,9 +402,6 @@ static void sendStatus() {
   NextionUI::setNetwork(networkMode(), apip.c_str(), staip.c_str(),
                         sta ? WiFi.RSSI() : 0,
                         (unsigned long)(millis() / 1000UL), FW_VERSION);
-  St7735UI::setNetwork(networkMode(), apip.c_str(), staip.c_str(),
-                       sta ? WiFi.RSSI() : 0,
-                       (unsigned long)(millis() / 1000UL), FW_VERSION);
 }
 
 // Nextion page 1 buttons: keep the local UI and the web UI in sync.
@@ -413,7 +412,6 @@ static void onNextionRange(int cm) {
 
 static void onNextionPause() {
   g_paused = !g_paused;
-  servo.write(servoPosFor(g_angle));
   sendConfig(255);
 }
 
@@ -429,8 +427,7 @@ static void onNextionCommand(const char *cmd) {
     g_handSweep = false;
     g_paused = true;
     g_manualTarget = g_angle;
-    servo.write(servoPosFor(g_angle));
-  } else if (strcmp(cmd, "NX:HOLDON") == 0) {
+    } else if (strcmp(cmd, "NX:HOLDON") == 0) {
     g_handMode = true;
     g_handSweep = true;
     // The Nextion sends HOLDON every 250 ms; allow a slow first heartbeat.
@@ -496,6 +493,13 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
       Serial.printf("[WS] cmd %s\n", msg);
 
       switch (msg[0]) {
+        case 'C':                       // "C0" reset proximity counter
+          if (msg[1] == '0') {
+            Proximity::reset();
+            broadcastProx();
+          }
+          break;
+
         case 'H':                       // "H1" visible / "H0" hidden
           if (num < 32) {
             if (msg[1] == '1') {
@@ -530,8 +534,7 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
             }
           }
           g_paused = paused;
-          servo.write(servoPosFor(g_angle));
-          Serial.printf("[WS] %s paused=%d sweep=%d target=%d angle=%d\n",
+                  Serial.printf("[WS] %s paused=%d sweep=%d target=%d angle=%d\n",
                         g_handMode ? "HAND" : "AUTO", g_paused ? 1 : 0,
                         g_handSweep ? 1 : 0, g_manualTarget, g_angle);
           sendConfig(255);
@@ -546,8 +549,7 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
           g_lastHandPingMs = 0;
           if (g_handMode) {
             g_manualTarget = g_angle;
-            servo.write(servoPosFor(g_angle));
-          } else {
+                    } else {
             g_direction = 1;
           }
           Serial.printf("[WS] mode=%s target=%d angle=%d paused=%d\n",
@@ -930,7 +932,7 @@ static void measureAtCurrent() {
   }
 
   NextionUI::addReading(g_angle, distance);
-  St7735UI::addReading(g_angle, distance);
+  St7735UI::addReading(distance);
 
   char buf[80];
   int n = snprintf(buf, sizeof(buf), "{\"a\":%d,\"d\":%d,\"mx\":%d}",
@@ -938,47 +940,9 @@ static void measureAtCurrent() {
   webSocket.broadcastTXT(buf, n);
 }
 
+// v2.0: the HC-SR04 is fixed in one direction; there is no servo sweep.
 static void takeStep() {
-  if (g_handMode) {
-    if (g_handSweep) {
-      g_manualTarget = g_angle;
-      servo.write(servoPosFor(g_angle));
-      delay(STEP_SETTLE_MS);
-      measureAtCurrent();
-
-      g_angle += g_direction * (int)stepDeg;
-      if (g_angle > 180) { g_angle = 360 - g_angle; g_direction = -1; }
-      if (g_angle < 0)   { g_angle = -g_angle;     g_direction =  1; }
-      return;
-    }
-
-    int target = constrain(g_manualTarget, 0, 180);
-    int delta  = target - g_angle;
-
-    if (delta != 0) {
-      int move = constrain(delta, -(int)stepDeg, (int)stepDeg);
-      g_angle += move;
-      servo.write(servoPosFor(g_angle));
-      delay(STEP_SETTLE_MS);
-      measureAtCurrent();
-      g_lastHandPingMs = millis();
-    } else if (g_lastHandPingMs == 0 ||
-               (uint32_t)(millis() - g_lastHandPingMs) >= 500UL) {
-      // At the target: keep the distance readout fresh.
-      servo.write(servoPosFor(g_angle));
-      measureAtCurrent();
-      g_lastHandPingMs = millis();
-    }
-    return;
-  }
-
-  servo.write(servoPosFor(g_angle));
-  delay(STEP_SETTLE_MS);
   measureAtCurrent();
-
-  g_angle += g_direction * (int)stepDeg;
-  if (g_angle > 180) { g_angle = 360 - g_angle; g_direction = -1; }
-  if (g_angle < 0)   { g_angle = -g_angle;     g_direction =  1; }
 }
 
 /* --------------------------------------------------------------------------
@@ -998,14 +962,6 @@ void setup() {
   pinMode(PIN_ECHO, INPUT);
   digitalWrite(PIN_TRIG, LOW);
 
-  pinMode(PIN_BUZZER, OUTPUT);
-  digitalWrite(PIN_BUZZER, LOW);
-
-  servo.setPeriodHertz(50);
-  servo.attach(PIN_SERVO, 500, 2400);
-  servo.write(servoPosFor(0));
-  delay(450);
-
   loadConfig();
   startNetwork();
 
@@ -1023,6 +979,11 @@ void setup() {
   server.on("/logo.jpg", []() {
     server.sendHeader("Cache-Control", "public, max-age=86400");
     server.send_P(200, "image/jpeg", (PGM_P)LOGO_JPG, LOGO_JPG_LEN);
+  });
+
+  server.on("/bg.jpg", []() {
+    server.sendHeader("Cache-Control", "public, max-age=86400");
+    server.send_P(200, "image/jpeg", (PGM_P)BG_JPG, BG_JPG_LEN);
   });
 
   server.on("/favicon.ico", []() {
@@ -1060,6 +1021,10 @@ void setup() {
   NextionUI::setCallbacks(onNextionRange, onNextionPause);
   NextionUI::setCommandCallback(onNextionCommand);
   NextionUI::begin();
+  Proximity::begin();
+  ProxAudio::begin();
+  St7735UI::setConfig(maxRangeCm, g_alertCm);
+  St7735UI::setProximity(Proximity::count());
   St7735UI::begin();
 
   Serial.println("------------------------------------------");
@@ -1094,7 +1059,14 @@ void loop() {
 
   unsigned long now = millis();
 
-  updateBuzzer(now);
+  ProxAudio::loop();
+  if (Proximity::poll()) {
+    ProxAudio::playAlert();
+    broadcastProx();
+  }
+  if (Proximity::pollReset()) {
+    broadcastProx();
+  }
 
   // AUTO runs only while at least one visible web UI is sending H1.
   g_webAutoOk = (g_webVisibleMask != 0) &&
@@ -1109,9 +1081,8 @@ void loop() {
     sendConfig(255);
   }
 
-  bool autoAllowed = g_handMode || g_webAutoOk;
-  if (!g_otaActive && !g_paused && autoAllowed &&
-      now - g_lastStepMs >= STEP_INTERVAL_MS) {
+  // v2.0: HC-SR04 measures continuously; there is no servo to gate.
+  if (!g_otaActive && now - g_lastStepMs >= STEP_INTERVAL_MS) {
     g_lastStepMs = now;
     takeStep();
   }
