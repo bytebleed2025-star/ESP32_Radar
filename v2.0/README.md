@@ -2,6 +2,16 @@
 
 Branch: `v2.0` (based on the ST7735 display branch)
 
+## Renders
+
+| ST7735 boot | ST7735 idle | ST7735 detected |
+|---|---|---|
+| ![](st7735-boot.png) | ![](st7735-idle.png) | ![](st7735-detect.png) |
+
+![Web UI desktop](web-desktop.png)
+
+![Web UI mobile](web-mobile.png)
+
 ## Hardware
 
 | Function | ESP32 pin | Notes |
