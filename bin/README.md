@@ -3,7 +3,32 @@
 All downloadable ESP32 images are kept under `bin/`. Pick the folder that
 matches your build.
 
-## v2.0 — ST7735, fixed-direction (current)
+## v2.1 — ILI9341 2.4" touch (current)
+
+File: [`v2.1/`](v2.1/)
+
+| File | Use |
+|---|---|
+| [`v2.1/DetektorAir-v2.1-ILI9341-factory.bin`](v2.1/DetektorAir-v2.1-ILI9341-factory.bin) | blank / new board, flash at **0x0** |
+| [`v2.1/DetektorAir-v2.1-ILI9341-ota.bin`](v2.1/DetektorAir-v2.1-ILI9341-ota.bin) | web OTA or ArduinoOTA |
+
+```cmd
+:: blank board over USB
+esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.1\DetektorAir-v2.1-ILI9341-factory.bin
+```
+
+Web OTA: **CONFIG → UPDATE FIRMWARE – OTA** → choose
+`DetektorAir-v2.1-ILI9341-ota.bin`.
+
+Checksums: [`v2.1/SHA256SUMS.txt`](v2.1/SHA256SUMS.txt).
+
+> Do **not** upload the `-factory.bin` through the web OTA page. It is a merged
+> image for offset `0x0`, not an application image.
+
+Features: 2.4" ILI9341 320×240 landscape, touch config buttons, freely rotating
+HC-SR04 head, inductive pass counter, MAX98357A MP3/WAV, web UI and OTA.
+
+## v2.0 — ST7735, fixed-direction
 
 File: [`v2.0/`](v2.0/)
 

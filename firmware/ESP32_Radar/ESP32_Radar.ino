@@ -63,8 +63,8 @@
 #define NEXTION_ENABLED 0
 #include "nextion_ui.h"
 
-#define ST7735_ENABLED 1
-#include "st7735_ui.h"
+#define ILI9341_ENABLED 1
+#include "ili9341_ui.h"
 
 #include "proximity.h"
 #include "audio_player.h"
@@ -73,7 +73,7 @@
  *  VERSION
  * ------------------------------------------------------------------------ */
 
-#define FW_VERSION "2.0.0"
+#define FW_VERSION "2.1.0"
 #define FW_BUILD   __DATE__ " " __TIME__
 
 /* --------------------------------------------------------------------------
@@ -353,15 +353,16 @@ static void loopNetwork() {
  * ------------------------------------------------------------------------ */
 
 static void sendConfig(uint8_t num) {
-  char buf[128];
+  char buf[160];
   int n = snprintf(buf, sizeof(buf),
                    "{\"cfg\":1,\"mx\":%d,\"s\":%u,\"p\":%u,\"hm\":%u,"
-                   "\"ta\":%d,\"bz\":%u,\"thr\":%d,\"pc\":%lu}",
+                   "\"ta\":%d,\"bz\":%u,\"thr\":%d,\"pc\":%lu,\"au\":%u}",
                    maxRangeCm, (unsigned)stepDeg, g_paused ? 1u : 0u,
                    g_handMode ? 1u : 0u,
                    g_handMode ? g_manualTarget : g_angle,
                    g_buzzerEnabled ? 1u : 0u, g_alertCm,
-                   (unsigned long)Proximity::count());
+                   (unsigned long)Proximity::count(),
+                   ProxAudio::enabled() ? 1u : 0u);
   if (num == 255) webSocket.broadcastTXT(buf, n);
   else            webSocket.sendTXT(num, buf, n);
 
@@ -369,8 +370,9 @@ static void sendConfig(uint8_t num) {
                        g_handMode,
                        g_handMode ? g_manualTarget : g_angle,
                        stepDeg, g_buzzerEnabled);
-  St7735UI::setConfig(maxRangeCm, g_alertCm);
-  St7735UI::setProximity(Proximity::count());
+  DisplayUI::setConfig(maxRangeCm, g_alertCm);
+  DisplayUI::setProximity(Proximity::count());
+  DisplayUI::setAudioEnabled(ProxAudio::enabled());
 }
 
 static void broadcastProx() {
@@ -378,7 +380,7 @@ static void broadcastProx() {
   int n = snprintf(buf, sizeof(buf), "{\"pc\":%lu}",
                    (unsigned long)Proximity::count());
   webSocket.broadcastTXT(buf, n);
-  St7735UI::setProximity(Proximity::count());
+  DisplayUI::setProximity(Proximity::count());
 }
 
 static void sendStatus() {
@@ -497,6 +499,14 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
           if (msg[1] == '0') {
             Proximity::reset();
             broadcastProx();
+          }
+          break;
+
+        case 'V':                       // "V1" local speaker on / "V0" off
+          if (msg[1] == '0' || msg[1] == '1') {
+            ProxAudio::setEnabled(msg[1] == '1');
+            DisplayUI::setAudioEnabled(ProxAudio::enabled());
+            sendConfig(255);
           }
           break;
 
@@ -932,7 +942,7 @@ static void measureAtCurrent() {
   }
 
   NextionUI::addReading(g_angle, distance);
-  St7735UI::addReading(distance);
+  DisplayUI::addReading(distance);
 
   char buf[80];
   int n = snprintf(buf, sizeof(buf), "{\"a\":%d,\"d\":%d,\"mx\":%d}",
@@ -1023,9 +1033,21 @@ void setup() {
   NextionUI::begin();
   Proximity::begin();
   ProxAudio::begin();
-  St7735UI::setConfig(maxRangeCm, g_alertCm);
-  St7735UI::setProximity(Proximity::count());
-  St7735UI::begin();
+  DisplayUI::setCallbacks(
+    []() {
+      Proximity::reset();
+      broadcastProx();
+    },
+    []() {
+      ProxAudio::toggle();
+      DisplayUI::setAudioEnabled(ProxAudio::enabled());
+      sendConfig(255);
+    }
+  );
+  DisplayUI::setConfig(maxRangeCm, g_alertCm);
+  DisplayUI::setProximity(Proximity::count());
+  DisplayUI::setAudioEnabled(ProxAudio::enabled());
+  DisplayUI::begin();
 
   Serial.println("------------------------------------------");
   Serial.println("AP+STA mode. HTTP :80, WebSocket :81");
@@ -1047,7 +1069,7 @@ void loop() {
   webSocket.loop();
   ArduinoOTA.handle();
   NextionUI::loop();
-  St7735UI::loop();
+  DisplayUI::loop();
 
   if (g_rebootAt && (long)(millis() - g_rebootAt) >= 0) {
     Serial.println("Rebooting...");

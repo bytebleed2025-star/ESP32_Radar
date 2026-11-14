@@ -4,7 +4,7 @@
 #pragma once
 #include <pgmspace.h>
 
-static const unsigned int INDEX_HTML_LEN = 80986;
+static const unsigned int INDEX_HTML_LEN = 81569;
 static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 <!DOCTYPE html>
 <html lang="id">
@@ -709,9 +709,10 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 
         <div class="prox-card">
           <div class="prox-top">
-            <span>PROXIMITY <small>INDUCTIVE</small></span>
+            <span>PASSES <small>INDUCTIVE</small></span>
             <b id="prox-count">0</b>
           </div>
+          <button class="btn ghost" id="speaker">SPEAKER: ON</button>
           <button class="btn ghost" id="prox-reset">RESET COUNTER</button>
         </div>
 
@@ -884,6 +885,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     blips: [],
     threshold: 50,
     prox: 0,
+    speaker: true,
     sound: false,
     lastEcho: null,
     status: null,
@@ -1460,6 +1462,12 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     var el = $("prox-count");
     if (el) el.textContent = S.prox;
   }
+  function updateSpeakerUI(){
+    var b = $("speaker");
+    if (!b) return;
+    b.textContent = "SPEAKER: " + (S.speaker ? "ON" : "OFF");
+    b.classList.toggle("ghost", !S.speaker);
+  }
   function updateSoundUI(){
     var b = $("sound");
     b.textContent = "SUARA: " + (S.sound ? "ON" : "OFF");
@@ -1475,10 +1483,11 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       if (typeof m.bz === "number") S.buzzer = !!m.bz;
       if (typeof m.thr === "number") S.threshold = clamp(m.thr, 10, 150);
       if (typeof m.pc === "number") S.prox = m.pc;
+      if (typeof m.au === "number") S.speaker = !!m.au;
       S.paused = !!m.p;
       if (S.paused) cancelHandHold(false);
       syncRangeUI(); syncSpeedUI(); syncThresholdUI(); syncManualUI();
-      updateModeUI(); updateBuzzerUI(); updateProxUI();
+      updateModeUI(); updateBuzzerUI(); updateProxUI(); updateSpeakerUI();
       return;
     }
     if (typeof m.pc === "number") {
@@ -2155,7 +2164,14 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       S.prox = 0;
       updateProxUI();
       send("C0");
-      toast("PROXIMITY COUNTER RESET");
+      toast("PASS COUNTER RESET");
+    });
+
+    $("speaker").addEventListener("click", function(){
+      S.speaker = !S.speaker;
+      updateSpeakerUI();
+      send("V" + (S.speaker ? "1" : "0"));
+      toast(S.speaker ? "SPEAKER ON" : "SPEAKER OFF");
     });
 
     $("sound").addEventListener("click", function(){
@@ -2201,6 +2217,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     updateModeUI();
     updateBuzzerUI();
     updateProxUI();
+    updateSpeakerUI();
     updateSoundUI();
     updateNote();
     setLink(DEMO ? "demo" : "connecting");

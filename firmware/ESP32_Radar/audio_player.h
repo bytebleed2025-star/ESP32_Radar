@@ -11,6 +11,7 @@
  */
 
 #include <Arduino.h>
+#include <Preferences.h>
 #include <AudioOutputI2S.h>
 #include <AudioFileSourcePROGMEM.h>
 #include <AudioGeneratorMP3.h>
@@ -25,12 +26,32 @@ namespace ProxAudio {
 static AudioOutputI2S *g_out = nullptr;
 static AudioGenerator *g_gen = nullptr;
 static AudioFileSourcePROGMEM *g_src = nullptr;
+static Preferences g_prefs;
+static bool g_enabled = true;
+
+inline void stop();
 
 inline void begin() {
   if (g_out) return;
   g_out = new AudioOutputI2S();
   g_out->SetPinout(19, 21, 22);   // BCLK, LRC, DIN
   g_out->SetGain(0.55f);
+  g_prefs.begin("lacak", false);
+  g_enabled = g_prefs.getBool("audio_en", true);
+}
+
+inline void setEnabled(bool enabled) {
+  g_enabled = enabled;
+  g_prefs.putBool("audio_en", g_enabled);
+  if (!g_enabled) stop();
+}
+
+inline bool enabled() {
+  return g_enabled;
+}
+
+inline void toggle() {
+  setEnabled(!g_enabled);
 }
 
 inline void stop() {
@@ -47,6 +68,7 @@ inline void stop() {
 }
 
 inline bool playAlert() {
+  if (!g_enabled) return false;
   if (!g_out) begin();
   stop();
 
