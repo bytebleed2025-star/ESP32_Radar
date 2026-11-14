@@ -61,6 +61,25 @@ HC-SR04 or MAX98357A from the ESP32 3.3 V regulator.
 > If you power the ESP32 through its `5V` pin, disconnect USB first (or use USB
 > as the only 5 V source) on boards that do not have a power-path diode.
 
+### ESP32 board (38-pin DevKit)
+
+This build targets a standard **ESP32 DevKit 38-pin** board (ESP32-WROOM-32,
+4 MB flash) **without a microSD slot**. Use the **GPIO labels printed on the
+board**, not the physical pin position, because 30-pin and 38-pin boards place
+the same GPIOs differently.
+
+- `5V` / `VIN` → 5 V supply; `3V3` → ST7735 VCC; `GND` → common ground.
+- GPIO 34 is input-only (inductive sensor). GPIO 35/36/39 are also input-only.
+- GPIO 6–11 are connected to the SPI flash and must not be used.
+- GPIO 5 is a strapping pin but is used for HC-SR04 `TRIG`; it is
+  high-impedance at boot, so it is normally safe.
+- Some 38-pin boards have a **microSD slot** wired to GPIO 2/4/12/13/14/15.
+  This build's board has **no SD slot**, so GPIO 13/14 are free for the ST7735.
+  If you use a different 38-pin board that does have the slot, remove any SD
+  card and verify that the display initialises; otherwise remap the TFT pins
+  and rebuild.
+- The onboard LED is usually GPIO 2; it is not used.
+
 ### Complete pin map
 
 | Module | Module pin | Connects to | Wire / note |
@@ -133,6 +152,26 @@ ST7735 LED ───── GPIO 32
 - If colours are swapped or the image is offset, change `ST7735_INITB` /
   `TFT_RGB_ORDER` / `ST7735_ROTATION` in `firmware/ESP32_Radar/st7735_ui.h`.
 
+#### Confirmed 1.8" ST7735S module
+
+This is the module specified for v2.0: 1.8 inch, 128×160, SPI, ST7735S,
+3.3 V, 12 o'clock viewing direction.
+
+| Header pin | Label | Connect to |
+|---|---|---|
+| 1 | `GND` | GND |
+| 2 | `VCC` | **3.3 V** |
+| 3 | `SCL` | **GPIO 14** |
+| 4 | `SDA` | **GPIO 13** |
+| 5 | `RES` | **GPIO 25** |
+| 6 | `DC` | **GPIO 26** |
+| 7 | `CS` | **GPIO 27** |
+| 8 | `BL` | **GPIO 32** |
+
+`BL` is the backlight-control pin. If the panel stays dark while GPIO 32 is
+HIGH, the module's `BL` is active-low: set `TFT_BACKLIGHT_ON` to `LOW` in
+`platformio.ini` and `st7735_ui.h`.
+
 #### Module compatibility
 
 This build targets the common **1.8 inch, 128×160, SPI, non-touch ST7735**
@@ -146,6 +185,12 @@ module (ST7735S / ST7735R, 8 pins).
   160×80 ST7735 modules; the layout is fixed at 160×128.
 - Touch or microSD variants are fine: leave `T_CLK`, `T_CS`, `T_DIN`, `T_DO`,
   `T_IRQ` and the SD-card pins unconnected. The firmware uses neither.
+- The blue 8-pin **ST7735S** board labeled
+  `VCC GND SCL SDA RST DC CS BLK` matches this build. Because it is an
+  ST7735S (7735R family), if the default `ST7735_INITB` gives a blank, offset
+  or odd-colour image, try `ST7735_REDTAB` first, then `ST7735_GREENTAB`.
+- Some boards use `BLK` as the backlight **cathode**. If the screen stays dark
+  with GPIO 32 HIGH, set `TFT_BACKLIGHT_ON` to `LOW`, or tie `BLK` to GND.
 - If the image is shifted by 1–3 px or the colours are wrong, select the init
   that matches your module in **both** `platformio.ini` and `st7735_ui.h`:
   - `ST7735_INITB` — current default (7735B-style 128×160)
