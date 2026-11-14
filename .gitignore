@@ -6,6 +6,7 @@
 # Arduino / editors
 .vscode/
 *.tmp
+firmware/ESP32_Radar/build/
 
 # Nextion build artifacts (source is in nextion/nx, TFT is kept)
 nextion/*.HMI

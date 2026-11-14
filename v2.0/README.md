@@ -8,23 +8,23 @@ Prebuilt **v2.0 ST7735** firmware (`FW_VERSION 2.0.0`):
 
 | File | Use |
 |---|---|
-| [`bin/DetektorAir-v2.0-ST7735-factory.bin`](bin/DetektorAir-v2.0-ST7735-factory.bin) | new / blank board, flash at **0x0** |
-| [`bin/DetektorAir-v2.0-ST7735-ota.bin`](bin/DetektorAir-v2.0-ST7735-ota.bin) | web **CONFIG → UPDATE FIRMWARE** or ArduinoOTA |
+| [`../bin/v2.0/DetektorAir-v2.0-ST7735-factory.bin`](../bin/v2.0/DetektorAir-v2.0-ST7735-factory.bin) | new / blank board, flash at **0x0** |
+| [`../bin/v2.0/DetektorAir-v2.0-ST7735-ota.bin`](../bin/v2.0/DetektorAir-v2.0-ST7735-ota.bin) | web **CONFIG → UPDATE FIRMWARE** or ArduinoOTA |
 
-Blank board over USB:
+Blank board over USB (run from the repository root):
 
 ```cmd
-esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\DetektorAir-v2.0-ST7735-factory.bin
+esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.0\DetektorAir-v2.0-ST7735-factory.bin
 ```
 
-Existing v2.0 board: upload `bin/DetektorAir-v2.0-ST7735-ota.bin` from the web
+Existing v2.0 board: upload `bin/v2.0/DetektorAir-v2.0-ST7735-ota.bin` from the web
 CONFIG tab (or use ArduinoOTA on port 3232, password `lacakota`).
 
-Checksums: [`bin/SHA256SUMS.txt`](bin/SHA256SUMS.txt).
+Checksums: [`../bin/v2.0/SHA256SUMS.txt`](../bin/v2.0/SHA256SUMS.txt).
 
-> The older root files `DetektorAir-ST7735-factory.bin` and
-> `DetektorAir-ST7735-ota.bin` are from the **servo sweep** ST7735 branch.
-> Do not use them for v2.0.
+> The older images are in [`../bin/legacy/`](../bin/legacy/):
+> `DetektorAir-ST7735-factory.bin` and `DetektorAir-ST7735-ota.bin` are from
+> the **servo sweep** ST7735 branch. Do not use them for v2.0.
 
 ## Renders
 
@@ -281,6 +281,24 @@ direction.
 
 > When changing ST7735 pins under PlatformIO, update **both** `platformio.ini`
 > and `st7735_ui.h` so the PlatformIO and Arduino IDE builds stay identical.
+
+## Prebuilt display-init variants
+
+The default image uses `ST7735_INITB`. If your ST7735S panel is blank, shifted,
+or has wrong colours, try one of these OTA images — same firmware, only the TFT
+init profile differs:
+
+| File | Init profile |
+|---|---|
+| [`../bin/v2.0/variants/DetektorAir-v2.0-ST7735S-redtab-ota.bin`](../bin/v2.0/variants/DetektorAir-v2.0-ST7735S-redtab-ota.bin) | `ST7735_REDTAB` |
+| [`../bin/v2.0/variants/DetektorAir-v2.0-ST7735S-greentab-ota.bin`](../bin/v2.0/variants/DetektorAir-v2.0-ST7735S-greentab-ota.bin) | `ST7735_GREENTAB` |
+
+Upload them through **CONFIG → UPDATE FIRMWARE – OTA**, the same as the normal
+`-ota.bin`.
+
+- Try **REDTAB** first for a normal 128×160 image.
+- Try **GREENTAB** if REDTAB is shifted by 1–3 px or shows a stripe at the edge.
+- If the default `INITB` image is already correct, no variant is needed.
 
 ## Behaviour
 
