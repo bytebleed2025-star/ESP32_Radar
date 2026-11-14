@@ -224,6 +224,26 @@
   .prox-top span{ font-size:8px; letter-spacing:.14em; color:rgba(185,255,214,.55); }
   .prox-top small{ font-size:7px; color:rgba(88,255,161,.4); }
   .prox-top b{ font-size:22px; line-height:1; color:var(--green-bright); font-weight:500; }
+
+  .buzzer-card{
+    display:flex; flex-direction:column; gap:8px;
+    padding:10px 12px; border:1px solid rgba(88,255,161,.22);
+    border-radius:10px; background:rgba(88,255,161,.04);
+  }
+  .bz-row{ display:flex; gap:6px; }
+  .bz-row .btn{ flex:1; padding:0 6px; font-size:8px; }
+  .bz-grid{ display:grid; grid-template-columns:1fr 1fr; gap:6px 8px; }
+  .bz-grid label{
+    display:flex; flex-direction:column; gap:3px;
+    font-size:7px; letter-spacing:.12em; color:rgba(185,255,214,.55);
+  }
+  .bz-grid label.span2{ grid-column:1 / -1; }
+  .bz-grid input{
+    height:26px; padding:0 6px;
+    border:1px solid rgba(88,255,161,.22); border-radius:5px;
+    background:rgba(4,22,13,.55); color:var(--green-bright);
+    font-family:var(--mono); font-size:9px;
+  }
   .hold-btn{
     height:42px; flex:0 0 100%;
     border-color:rgba(255,200,87,.45);
@@ -707,6 +727,25 @@
           <button class="btn ghost" id="prox-reset">RESET COUNTER</button>
         </div>
 
+        <div class="buzzer-card">
+          <div class="prox-top">
+            <span>BUZZER <small>PATTERN</small></span>
+            <b id="bz-state">ON</b>
+          </div>
+          <div class="bz-row">
+            <button class="btn ghost" id="bz-enable">BUZZER: ON</button>
+            <button class="btn ghost" id="bz-type">ACTIVE</button>
+          </div>
+          <div class="bz-grid">
+            <label>LONG ON <input id="bz-lo" type="number" min="50" max="60000" step="50" value="1000"/></label>
+            <label>LONG OFF <input id="bz-lf" type="number" min="50" max="60000" step="50" value="1500"/></label>
+            <label>SHORT ON <input id="bz-so" type="number" min="50" max="60000" step="50" value="500"/></label>
+            <label>SHORT OFF <input id="bz-sf" type="number" min="50" max="60000" step="50" value="750"/></label>
+            <label class="span2">ALERT HOLD <input id="bz-hd" type="number" min="0" max="600000" step="250" value="5000"/></label>
+          </div>
+          <button class="btn" id="bz-save">SIMPAN TIMING</button>
+        </div>
+
         <div class="panel-head sub-head"><span>TAUTAN</span><i>03</i></div>
         <div class="lines">
           <div><span>MODE</span><b id="mode">—</b></div>
@@ -869,6 +908,12 @@
     holdBeat: null,
     manual: 90,
     buzzer: true,
+    bzActive: true,
+    bzLo: 1000,
+    bzLf: 1500,
+    bzSo: 500,
+    bzSf: 750,
+    bzHd: 5000,
     servoAngle: 0,
     targetAngle: 0,
     displayAngle: 0,
@@ -1445,8 +1490,29 @@
   }
   function updateBuzzerUI(){
     var b = $("buzzer");
-    b.textContent = "BUZZER: " + (S.buzzer ? "ON" : "OFF");
-    b.classList.toggle("ghost", !S.buzzer);
+    if (b) {
+      b.textContent = "BUZZER: " + (S.buzzer ? "ON" : "OFF");
+      b.classList.toggle("ghost", !S.buzzer);
+    }
+    var en = $("bz-enable");
+    if (en) {
+      en.textContent = "BUZZER: " + (S.buzzer ? "ON" : "OFF");
+      en.classList.toggle("ghost", !S.buzzer);
+    }
+    var st = $("bz-state");
+    if (st) st.textContent = S.buzzer ? "ON" : "OFF";
+    var ty = $("bz-type");
+    if (ty) ty.textContent = S.bzActive ? "ACTIVE" : "PASSIVE";
+
+    function setVal(id, v){
+      var el = $(id);
+      if (el && document.activeElement !== el) el.value = v;
+    }
+    setVal("bz-lo", S.bzLo);
+    setVal("bz-lf", S.bzLf);
+    setVal("bz-so", S.bzSo);
+    setVal("bz-sf", S.bzSf);
+    setVal("bz-hd", S.bzHd);
   }
   function updateProxUI(){
     var el = $("prox-count");
@@ -1465,6 +1531,12 @@
       if (typeof m.hm === "number") S.hand = !!m.hm;
       if (typeof m.ta === "number") S.manual = clamp(m.ta, 0, 180);
       if (typeof m.bz === "number") S.buzzer = !!m.bz;
+      if (typeof m.ba === "number") S.bzActive = !!m.ba;
+      if (typeof m.b0 === "number") S.bzLo = m.b0;
+      if (typeof m.b1 === "number") S.bzLf = m.b1;
+      if (typeof m.b2 === "number") S.bzSo = m.b2;
+      if (typeof m.b3 === "number") S.bzSf = m.b3;
+      if (typeof m.b4 === "number") S.bzHd = m.b4;
       if (typeof m.thr === "number") S.threshold = clamp(m.thr, 10, 150);
       if (typeof m.pc === "number") S.prox = m.pc;
       S.paused = !!m.p;
@@ -2148,6 +2220,37 @@
       updateProxUI();
       send("C0");
       toast("PROXIMITY COUNTER RESET");
+    });
+
+    $("bz-enable").addEventListener("click", function(){
+      S.buzzer = !S.buzzer;
+      updateBuzzerUI();
+      savePrefs();
+      send("B" + (S.buzzer ? "1" : "0"));
+      toast(S.buzzer ? "BUZZER ON" : "BUZZER OFF");
+    });
+
+    $("bz-type").addEventListener("click", function(){
+      S.bzActive = !S.bzActive;
+      updateBuzzerUI();
+      send("Y" + (S.bzActive ? "1" : "0"));
+      toast(S.bzActive ? "BUZZER: ACTIVE" : "BUZZER: PASSIVE");
+    });
+
+    $("bz-save").addEventListener("click", function(){
+      function readMs(id, min, max, fallback){
+        var v = parseInt($(id).value, 10);
+        if (isNaN(v)) v = fallback;
+        return Math.min(max, Math.max(min, v));
+      }
+      S.bzLo = readMs("bz-lo", 50, 60000, 1000);
+      S.bzLf = readMs("bz-lf", 50, 60000, 1500);
+      S.bzSo = readMs("bz-so", 50, 60000, 500);
+      S.bzSf = readMs("bz-sf", 50, 60000, 750);
+      S.bzHd = readMs("bz-hd", 0, 600000, 5000);
+      updateBuzzerUI();
+      send("Z" + S.bzLo + "," + S.bzLf + "," + S.bzSo + "," + S.bzSf + "," + S.bzHd);
+      toast("BUZZER TIMING SAVED");
     });
 
     $("sound").addEventListener("click", function(){

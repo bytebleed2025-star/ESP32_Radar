@@ -21,7 +21,7 @@
  *    SG90     +    -> external 5V (1A) + 470uF capacitor recommended
  *             GND  -> common GND with ESP32
  *             SIG  -> GPIO 19
- *    Buzzer   +    -> GPIO 23 (active buzzer; set BUZZER_ACTIVE 0 for passive)
+ *    Buzzer   +    -> GPIO 23 (active or passive; type selectable in web UI)
  *             -    -> GND
  *
  *  Libraries (Arduino IDE -> Library Manager)
@@ -67,13 +67,13 @@
 #include "st7735_ui.h"
 
 #include "proximity.h"
-#include "audio_player.h"
+#include "buzzer.h"
 
 /* --------------------------------------------------------------------------
  *  VERSION
  * ------------------------------------------------------------------------ */
 
-#define FW_VERSION "2.0.0"
+#define FW_VERSION "2.0.1"
 #define FW_BUILD   __DATE__ " " __TIME__
 
 /* --------------------------------------------------------------------------
@@ -95,11 +95,7 @@ const char *OTA_PASSWORD = "lacakota";
 // Pins
 #define PIN_TRIG   5
 #define PIN_ECHO  18
-#define PIN_BUZZER 23       // legacy buzzer pin, unused in v2.0
-
-// 1 = active buzzer (HIGH = sound), 0 = passive buzzer (tone)
-#define BUZZER_ACTIVE 1
-#define BUZZER_TONE_HZ 2200
+#define PIN_BUZZER 23       // active or passive buzzer output
 
 
 
@@ -134,10 +130,6 @@ static bool g_webAutoOk      = false;
 static unsigned long g_handHoldUntil = 0;
 static int  g_manualTarget   = 90;
 static int  g_alertCm        = 50;
-static bool g_buzzerEnabled  = true;
-static bool g_buzzerLevel    = false;
-static unsigned long g_lastNearMs   = 0;
-static unsigned long g_buzzerToggleMs = 0;
 static unsigned long g_lastHandPingMs = 0;
 static int  g_lastMeasurement = 0;
 static int  g_angle          = 90;   // fixed direction in v2.0
@@ -145,8 +137,6 @@ static int  g_direction      = 1;
 static unsigned long g_lastStepMs   = 0;
 static unsigned long g_lastStatusMs = 0;
 static unsigned long g_lastStaAttempt = 0;
-
-static void buzzerWrite(bool on);
 
 static bool g_otaActive = false;
 static bool g_otaOk     = false;
@@ -353,14 +343,23 @@ static void loopNetwork() {
  * ------------------------------------------------------------------------ */
 
 static void sendConfig(uint8_t num) {
-  char buf[128];
+  char buf[224];
   int n = snprintf(buf, sizeof(buf),
                    "{\"cfg\":1,\"mx\":%d,\"s\":%u,\"p\":%u,\"hm\":%u,"
-                   "\"ta\":%d,\"bz\":%u,\"thr\":%d,\"pc\":%lu}",
+                   "\"ta\":%d,\"bz\":%u,\"ba\":%u,"
+                   "\"b0\":%lu,\"b1\":%lu,\"b2\":%lu,\"b3\":%lu,\"b4\":%lu,"
+                   "\"thr\":%d,\"pc\":%lu}",
                    maxRangeCm, (unsigned)stepDeg, g_paused ? 1u : 0u,
                    g_handMode ? 1u : 0u,
                    g_handMode ? g_manualTarget : g_angle,
-                   g_buzzerEnabled ? 1u : 0u, g_alertCm,
+                   Buzzer::enabled() ? 1u : 0u,
+                   Buzzer::activeType() ? 1u : 0u,
+                   (unsigned long)Buzzer::longOn(),
+                   (unsigned long)Buzzer::longOff(),
+                   (unsigned long)Buzzer::shortOn(),
+                   (unsigned long)Buzzer::shortOff(),
+                   (unsigned long)Buzzer::alertHold(),
+                   g_alertCm,
                    (unsigned long)Proximity::count());
   if (num == 255) webSocket.broadcastTXT(buf, n);
   else            webSocket.sendTXT(num, buf, n);
@@ -368,7 +367,7 @@ static void sendConfig(uint8_t num) {
   NextionUI::setConfig(maxRangeCm, g_paused, g_alertCm,
                        g_handMode,
                        g_handMode ? g_manualTarget : g_angle,
-                       stepDeg, g_buzzerEnabled);
+                       stepDeg, Buzzer::enabled());
   St7735UI::setConfig(maxRangeCm, g_alertCm);
   St7735UI::setProximity(Proximity::count());
 }
@@ -454,11 +453,7 @@ static void onNextionCommand(const char *cmd) {
   } else if (strcmp(cmd, "NX:SPD5") == 0) {
     stepDeg = 5;
   } else if (strcmp(cmd, "NX:BUZZ") == 0) {
-    g_buzzerEnabled = !g_buzzerEnabled;
-    if (!g_buzzerEnabled) {
-      g_buzzerLevel = false;
-      buzzerWrite(false);
-    }
+    Buzzer::setEnabled(!Buzzer::enabled());
   } else if (strcmp(cmd, "NX:THR+") == 0) {
     g_alertCm = constrain(g_alertCm + 5, 10, 150);
   } else if (strcmp(cmd, "NX:THR-") == 0) {
@@ -485,9 +480,9 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
       break;
 
     case WStype_TEXT: {
-      if (length == 0 || length > 31) break;
+      if (length == 0 || length > 63) break;
 
-      char msg[32];
+      char msg[64];
       memcpy(msg, payload, length);
       msg[length] = '\0';
       Serial.printf("[WS] cmd %s\n", msg);
@@ -570,13 +565,24 @@ static void onWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t lengt
           break;
 
         case 'B':                       // "B1" buzzer on / "B0" off
-          g_buzzerEnabled = (atoi(msg + 1) != 0);
-          if (!g_buzzerEnabled) {
-            g_buzzerLevel = false;
-            buzzerWrite(false);
+          Buzzer::setEnabled(msg[1] == '1');
+          sendConfig(255);
+          break;
+
+        case 'Y':                       // "Y1" active buzzer / "Y0" passive
+          Buzzer::setActive(msg[1] == '1');
+          sendConfig(255);
+          break;
+
+        case 'Z': {                     // "Z1000,1500,500,750,5000"
+          unsigned long lo, lf, so, sf, hd;
+          if (sscanf(msg + 1, "%lu,%lu,%lu,%lu,%lu",
+                     &lo, &lf, &so, &sf, &hd) == 5) {
+            Buzzer::setTimings(lo, lf, so, sf, hd);
           }
           sendConfig(255);
           break;
+        }
 
         case 'T':                       // "T50" alert/buzzer threshold in cm
           g_alertCm = constrain(atoi(msg + 1), 10, 150);
@@ -638,7 +644,7 @@ static void handleDebug() {
            "\"buzzer\":%d,\"last_cm\":%d,\"nx_rx\":%lu}",
            g_handMode ? "HAND" : "AUTO", g_paused ? 1 : 0,
            g_handSweep ? 1 : 0, g_angle, g_manualTarget, (unsigned)stepDeg,
-           g_alertCm, g_buzzerEnabled ? 1 : 0, g_lastMeasurement,
+           g_alertCm, Buzzer::enabled() ? 1 : 0, g_lastMeasurement,
            (unsigned long)NextionUI::rxBytes());
   sendJson(200, body);
 }
@@ -890,46 +896,12 @@ static void startOta() {
  *  SCAN
  * ------------------------------------------------------------------------ */
 
-static void buzzerWrite(bool on) {
-#if BUZZER_ACTIVE
-  digitalWrite(PIN_BUZZER, on ? HIGH : LOW);
-#else
-  if (on) tone(PIN_BUZZER, BUZZER_TONE_HZ);
-  else    noTone(PIN_BUZZER);
-#endif
-}
-
-static void updateBuzzer(uint32_t now) {
-  bool near = g_lastNearMs != 0 &&
-              (uint32_t)(now - g_lastNearMs) < 1500UL;
-  bool active = g_buzzerEnabled && near;
-
-  if (!active) {
-    if (g_buzzerLevel) {
-      g_buzzerLevel = false;
-      buzzerWrite(false);
-    }
-    return;
-  }
-
-  // Faster beep when the object is very close.
-  uint32_t period = (g_lastMeasurement > 0 && g_lastMeasurement <= 20) ? 90UL : 170UL;
-  if ((uint32_t)(now - g_buzzerToggleMs) >= period) {
-    g_buzzerToggleMs = now;
-    g_buzzerLevel = !g_buzzerLevel;
-    buzzerWrite(g_buzzerLevel);
-  }
-}
-
 static void measureAtCurrent() {
   int distance = 0;
   float cm = pingCm();
   if (cm > 0.0f) distance = (int)(cm + 0.5f);
 
   g_lastMeasurement = distance;
-  if (distance > 0 && distance <= g_alertCm) {
-    g_lastNearMs = millis();
-  }
 
   NextionUI::addReading(g_angle, distance);
   St7735UI::addReading(distance);
@@ -1022,7 +994,7 @@ void setup() {
   NextionUI::setCommandCallback(onNextionCommand);
   NextionUI::begin();
   Proximity::begin();
-  ProxAudio::begin();
+  Buzzer::begin();
   St7735UI::setConfig(maxRangeCm, g_alertCm);
   St7735UI::setProximity(Proximity::count());
   St7735UI::begin();
@@ -1059,9 +1031,9 @@ void loop() {
 
   unsigned long now = millis();
 
-  ProxAudio::loop();
+  Buzzer::loop();
   if (Proximity::poll()) {
-    ProxAudio::playAlert();
+    Buzzer::trigger();
     broadcastProx();
   }
   if (Proximity::pollReset()) {

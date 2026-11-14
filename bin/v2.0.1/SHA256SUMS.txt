@@ -1,0 +1,2 @@
+7b64379fc1075347cfe5743dca79ce6e86324eb313b341f518ece9b6d27bcc62  DetektorAir-v2.0.1-ST7735-factory.bin
+40f6ad0bcb9d58d116bc7b7d17fedb0929438f0ec88cb74d01bac0250f517ce2  DetektorAir-v2.0.1-ST7735-ota.bin
