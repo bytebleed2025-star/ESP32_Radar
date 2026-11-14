@@ -2,6 +2,30 @@
 
 Branch: `v2.0` (based on the ST7735 display branch)
 
+## Download & flash
+
+Prebuilt **v2.0 ST7735** firmware (`FW_VERSION 2.0.0`):
+
+| File | Use |
+|---|---|
+| [`bin/DetektorAir-v2.0-ST7735-factory.bin`](bin/DetektorAir-v2.0-ST7735-factory.bin) | new / blank board, flash at **0x0** |
+| [`bin/DetektorAir-v2.0-ST7735-ota.bin`](bin/DetektorAir-v2.0-ST7735-ota.bin) | web **CONFIG → UPDATE FIRMWARE** or ArduinoOTA |
+
+Blank board over USB:
+
+```cmd
+esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\DetektorAir-v2.0-ST7735-factory.bin
+```
+
+Existing v2.0 board: upload `bin/DetektorAir-v2.0-ST7735-ota.bin` from the web
+CONFIG tab (or use ArduinoOTA on port 3232, password `lacakota`).
+
+Checksums: [`bin/SHA256SUMS.txt`](bin/SHA256SUMS.txt).
+
+> The older root files `DetektorAir-ST7735-factory.bin` and
+> `DetektorAir-ST7735-ota.bin` are from the **servo sweep** ST7735 branch.
+> Do not use them for v2.0.
+
 ## Renders
 
 | ST7735 boot | ST7735 idle | ST7735 detected |

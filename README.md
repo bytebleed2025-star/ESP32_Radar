@@ -300,8 +300,9 @@ WebSocket, WebAudio, file-picker OTA and Back-to-settings. See
 Ship these two files to another user:
 
 ```text
-DetektorAir-ota.bin        ESP32 OTA firmware
+DetektorAir-ota.bin        ESP32 OTA firmware (Nextion / servo build)
 DetektorAir-debug.apk      Android WebView APK
+v2.0/bin/DetektorAir-v2.0-ST7735-ota.bin   v2.0 ST7735 OTA firmware
 ```
 
 For the Nextion display, ship only:
@@ -320,9 +321,15 @@ For a completely blank ESP32, use one of the merged images and flash it at
 **0x0**:
 
 ```text
-DetektorAir-Nextion-factory.bin   Nextion display build
-DetektorAir-ST7735-factory.bin    ST7735 display build
+DetektorAir-Nextion-factory.bin   Nextion display build (servo version)
+DetektorAir-ST7735-factory.bin    ST7735 servo build (older branch)
+v2.0/bin/DetektorAir-v2.0-ST7735-factory.bin   current v2.0 ST7735 build
 ```
+
+> For the **v2.0 fixed-direction** build (no servo, ST7735, MAX98357A,
+> inductive counter), download
+> [`v2.0/bin/DetektorAir-v2.0-ST7735-factory.bin`](v2.0/bin/DetektorAir-v2.0-ST7735-factory.bin).
+> The root-level ST7735 image is the older servo-sweep build.
 
 ```cmd
 esptool.py --chip esp32 --port COM5 write_flash 0x0 DetektorAir-Nextion-factory.bin
