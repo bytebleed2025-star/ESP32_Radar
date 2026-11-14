@@ -1,0 +1,2 @@
+7ffa1aaf6468c4a93eb49207212ca01a1cddb87ba4fe17e7d708837d7a16f144  DetektorAir-v2.0-ST7735S-greentab-ota.bin
+87fcabe357eb11962897590ca0ecbb72c8d6a2dbbf5fafbac0123809e327a2e1  DetektorAir-v2.0-ST7735S-redtab-ota.bin
