@@ -26,6 +26,21 @@ Features: ST7735 1.8" fixed-direction sonar, inductive pass counter, GPIO23
 buzzer with long idle / short alert patterns adjustable in the web UI, web OTA.
 No MAX98357A and no MP3/WAV.
 
+### v2.0.1 display init variants
+
+If the ST7735 stays **white** with the default image, try these OTA files. They
+are identical to v2.0.1 except for the ST7735 init sequence and a lower
+**15 MHz** SPI clock (safer on breadboard wiring).
+
+| File | Init |
+|---|---|
+| [`v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-initb-15mhz-ota.bin`](v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-initb-15mhz-ota.bin) | `ST7735_INITB` |
+| [`v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-redtab-15mhz-ota.bin`](v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-redtab-15mhz-ota.bin) | `ST7735_REDTAB` |
+| [`v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-greentab-15mhz-ota.bin`](v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-greentab-15mhz-ota.bin) | `ST7735_GREENTAB` |
+
+Upload them through the web OTA page. Try INITB first, then REDTAB, then
+GREENTAB.
+
 > Do **not** upload the `-factory.bin` through the web OTA page. It is a merged
 > image for offset `0x0`, not an application image.
 

@@ -121,6 +121,24 @@ bin/v2.0.1/DetektorAir-v2.0.1-ST7735-ota.bin       web OTA / ArduinoOTA
 
 See [`../bin/README.md`](../bin/README.md) for all versions.
 
+## Display init variants
+
+If the ST7735 stays **white** (backlight on, no image) with the normal firmware,
+try these OTA images. They are the same v2.0.1 firmware with the ST7735 SPI
+clock lowered to **15 MHz** and a different init sequence:
+
+| File | Init |
+|---|---|
+| [`../bin/v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-initb-15mhz-ota.bin`](../bin/v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-initb-15mhz-ota.bin) | `ST7735_INITB` |
+| [`../bin/v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-redtab-15mhz-ota.bin`](../bin/v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-redtab-15mhz-ota.bin) | `ST7735_REDTAB` |
+| [`../bin/v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-greentab-15mhz-ota.bin`](../bin/v2.0.1/variants/DetektorAir-v2.0.1-ST7735S-greentab-15mhz-ota.bin) | `ST7735_GREENTAB` |
+
+Upload them through the web OTA page and try INITB → REDTAB → GREENTAB.
+
+If all three stay white, the problem is wiring, the FPC ribbon, or power, not
+the firmware. Recheck `SCL=GPIO14`, `SDA=GPIO13`, `RST=GPIO25`, `DC=GPIO26`,
+`CS=GPIO27`, `VDD=3.3 V`, `GND=GND`.
+
 ## Notes
 
 - The ST7735 is the same 1.8" 128×160 SPI, no-touch module used in v2.0.
