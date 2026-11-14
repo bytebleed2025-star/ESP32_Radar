@@ -25,7 +25,7 @@
 #define TFT_DC   26
 #define TFT_RST  25
 #define TFT_BL   32
-#define TFT_BACKLIGHT_ON HIGH
+#define TFT_BACKLIGHT_ON LOW
 #define USE_HSPI_PORT 1
 #define LOAD_GLCD 1
 #define LOAD_FONT1 1

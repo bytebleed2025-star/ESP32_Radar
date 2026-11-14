@@ -44,7 +44,7 @@ Checksums: [`../bin/v2.1/SHA256SUMS.txt`](../bin/v2.1/SHA256SUMS.txt).
 | ILI9341 `CS` | GPIO 27 | |
 | ILI9341 `DC` | GPIO 26 | |
 | ILI9341 `RST` | GPIO 25 | |
-| ILI9341 `BL` | GPIO 32 | drive through transistor/MOSFET |
+| ILI9341 `BL` | GPIO 32 | **P-channel MOSFET high-side; LOW = on** |
 | Touch `T_CLK` | GPIO 14 | XPT2046 |
 | Touch `T_DIN` | GPIO 13 | |
 | Touch `T_DO` | GPIO 17 | |
@@ -93,6 +93,27 @@ On first boot the display asks for a touch calibration. Touch the crosshair
 points when prompted. The calibration is stored in NVS (`lacak` namespace).
 If it is skipped, the **CAL** button re-runs calibration.
 
+## Backlight switch (P-channel high-side)
+
+The 2.4" module's `LED` pin is the backlight **anode**. Use a logic-level
+P-channel MOSFET (e.g. AO3401) between 3.3 V and `LED`:
+
+```text
+3.3 V ────────── Source
+                   P-channel MOSFET
+GPIO 32 ──1 kΩ── Gate
+3.3 V  ──10 kΩ── Gate       (keeps it OFF during boot)
+                   Drain ──── module LED
+```
+
+- GPIO 32 **LOW** = backlight **ON**.
+- GPIO 32 **HIGH** = backlight **OFF**.
+- The firmware and `TFT_eSPI_User_Setup.h` use `TFT_BACKLIGHT_ON LOW`.
+- The 10 kΩ gate pull-up keeps the backlight off while the ESP32 boots.
+- If your module has a dedicated `BL` control input with an onboard
+  transistor, drive it directly instead and set `TFT_BACKLIGHT_ON` to match
+  its polarity (usually `HIGH`).
+
 ## Build
 
 ```bash
@@ -126,9 +147,8 @@ See [`../bin/README.md`](../bin/README.md) for all versions.
 
 - The board can be a 30-pin or 38-pin ESP32-WROOM-32. GPIO 16/17 are safe on
   WROOM but are used for PSRAM on WROVER.
-- The 2.4" backlight draws more current than a GPIO can source. Use a
-  transistor/MOSFET on GPIO 32, or tie `BL` to 3.3 V. If the backlight is
-  active-low, set `TFT_BACKLIGHT_ON` to `LOW`.
+- The 2.4" backlight uses a **P-channel MOSFET high-side switch** on GPIO 32:
+  GPIO **LOW = on**. `TFT_BACKLIGHT_ON` is set to `LOW`.
 - If the display colours are swapped, change `TFT_RGB_ORDER` between
   `TFT_BGR` and `TFT_RGB` in `platformio.ini` and `ili9341_ui.h`.
 - If the image is rotated, change `DISPLAY_ROTATION` (1 or 3).

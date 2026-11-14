@@ -1,2 +1,2 @@
-ec56073945fd37cf202324d8e8e88033de7f5731bfe03ae0be97af33cadd6b27  DetektorAir-v2.1-ILI9341-factory.bin
-83bf2f607e1816876425ea6618c05fb52cd3faa37fb1ac222494df4a1c6af7e4  DetektorAir-v2.1-ILI9341-ota.bin
+143f4a1444056d756d0c9f5478bcfdff9b56da7bf4a893be05d5e4aca8f19caa  DetektorAir-v2.1-ILI9341-factory.bin
+50802b8c03273e67c92e324d1a54a92c2c02f48c5b6efc3be133ceb4de1af866  DetektorAir-v2.1-ILI9341-ota.bin
