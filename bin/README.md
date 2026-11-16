@@ -49,6 +49,11 @@ and cycles red → green → blue, then prints `ST7735 OK`.
 
 [`v2.0.1/test/DetektorAir-v2.0.1-ST7735-test-factory.bin`](v2.0.1/test/DetektorAir-v2.0.1-ST7735-test-factory.bin)
 
+If it stays white, try the **software-SPI** tests, which bypass TFT_eSPI/HSPI:
+
+- [`v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-greentab-factory.bin`](v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-greentab-factory.bin)
+- [`v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-redtab-factory.bin`](v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-redtab-factory.bin)
+
 Serial output at 115200 should show:
 
 ```text

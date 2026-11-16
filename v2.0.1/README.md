@@ -146,6 +146,12 @@ ST7735 test: 15 MHz, red → green → blue, then `ST7735 OK`.
 
 [`../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-test-factory.bin`](../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-test-factory.bin)
 
+If that stays white, try the **software-SPI** tests. They bypass TFT_eSPI and
+the ESP32 HSPI peripheral completely:
+
+- [`../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-greentab-factory.bin`](../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-greentab-factory.bin)
+- [`../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-redtab-factory.bin`](../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-redtab-factory.bin)
+
 Serial at 115200 should print:
 
 ```text
@@ -154,10 +160,19 @@ TFT 160 x 128
 ST7735 TEST DONE
 ```
 
-- Serial prints but the screen stays white → display, ribbon, or controller
-  power problem.
+or for SWSPI:
+
+```text
+SWSPI TEST BOOT
+TFT 160 x 128
+SWSPI TEST DONE
+```
+
+- Serial prints but the screen stays white → display, ribbon, soldering, or
+  controller power problem.
 - Screen cycles red/green/blue → the panel works; the issue is in the radar UI
   init/config.
+- SWSPI works but TFT_eSPI does not → HSPI/pin configuration issue.
 - No serial output → the test image did not boot; reflash at 0x0 and press EN.
 
 ## Notes
