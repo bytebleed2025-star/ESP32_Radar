@@ -1,11 +1,13 @@
 #pragma once
 
 /*
- * v2.0.1 ST7735 160x128 landscape UI (modern tile layout).
+ * v2.0.1 ST7735 160x128 landscape UI: animated PPI radar + data column.
  *
  * SCLK 14, MOSI 13, MISO 12, CS 27, DC 26, RST 25, BL 32.
  * ST7735S panel, GREENTAB init, 1 MHz HSPI (verified on breadboard wiring).
- * The HC-SR04 is fixed-direction; there is no servo.
+ *
+ * The HC-SR04 is fixed-direction. The angle is a virtual sweep generated in
+ * firmware and sent to both the web UI and this display.
  */
 
 #ifndef USER_SETUP_LOADED
@@ -32,6 +34,7 @@
 #endif
 
 #include <TFT_eSPI.h>
+#include <math.h>
 
 #include "st7735_logo.h"
 
@@ -44,24 +47,27 @@ namespace St7735UI {
 static TFT_eSPI tft;
 
 static int      g_dist = 0;
+static int      g_angle = 90;
+static int      g_dir = 1;
 static int      g_maxRange = 200;
 static int      g_alertCm = 50;
 static uint32_t g_count = 0;
-static bool     g_redraw = true;
 
 static int      g_lastDist = -1;
 static uint32_t g_lastCount = 0xFFFFFFFF;
 static bool     g_lastDetect = false;
-static uint32_t g_nextMs = 0;
+static uint32_t g_nextRadar = 0;
+static bool     g_redraw = true;
 
-static const int HISTORY_LEN = 46;
-static uint8_t g_hist[HISTORY_LEN];
-static uint8_t g_histIdx = 0;
+static const int CX = 48;
+static const int CY = 73;
+static const int R  = 44;
 
 static const uint16_t C_BG     = 0x0841;
 static const uint16_t C_PANEL  = 0x10A2;
 static const uint16_t C_EDGE   = 0x2A69;
 static const uint16_t C_GREEN  = 0x5FE4;
+static const uint16_t C_TRAIL  = 0x1A45;
 static const uint16_t C_TEXT   = 0xEF7D;
 static const uint16_t C_DIM    = 0x7BEF;
 static const uint16_t C_AMBER  = 0xFD20;
@@ -70,57 +76,80 @@ static bool detected() {
   return g_dist > 0 && g_dist <= g_alertCm;
 }
 
-static void drawTile(int x, int y, int w, int h) {
-  tft.fillRoundRect(x, y, w, h, 5, C_PANEL);
-  tft.drawRoundRect(x, y, w, h, 5, C_EDGE);
-  tft.drawFastHLine(x + 6, y + 1, w - 12, C_GREEN);
+static void drawBeam(int angle, uint16_t color) {
+  float rad = (180.0f + angle) * PI / 180.0f;
+  int x = CX + (int)(cosf(rad) * R);
+  int y = CY + (int)(sinf(rad) * R);
+  tft.drawLine(CX, CY, x, y, color);
 }
 
-static void drawHistory() {
-  int x0 = 8, y0 = 94, h = 12;
-  tft.fillRect(x0, y0, 144, h, C_PANEL);
-  int denom = constrain(g_maxRange, 40, 400);
+static void drawRadar() {
+  tft.fillRect(1, 20, 94, 106, C_BG);
 
-  for (int i = 0; i < HISTORY_LEN; i++) {
-    uint8_t v = g_hist[(g_histIdx + i) % HISTORY_LEN];
-    int bh = (int)((long)constrain(v, 0, denom) * h / denom);
-    if (bh < 1) bh = 1;
-    uint16_t col = (v > 0 && v <= g_alertCm) ? C_AMBER : C_GREEN;
-    tft.drawFastVLine(x0 + i * 3, y0 + h - bh, bh, col);
+  for (int i = 1; i <= 3; i++) {
+    tft.drawCircle(CX, CY, R * i / 3, C_EDGE);
   }
+  tft.drawFastHLine(CX - R, CY, 2 * R, C_EDGE);
+  tft.drawFastVLine(CX, CY - R, 2 * R, C_EDGE);
+
+  tft.setTextFont(1);
+  tft.setTextColor(C_DIM, C_BG);
+  tft.drawString("0", 2, 74);
+  tft.drawString("90", 44, 21);
+  tft.drawString("180", 86, 74);
+
+  for (int i = 3; i >= 1; i--) {
+    int a = g_angle - g_dir * i * 6;
+    if (a >= 0 && a <= 180) drawBeam(a, C_TRAIL);
+  }
+  drawBeam(g_angle, C_GREEN);
+
+  if (g_dist > 0) {
+    int rr = map(constrain(g_dist, 0, g_maxRange), 0, g_maxRange, 6, R - 4);
+    float rad = (180.0f + g_angle) * PI / 180.0f;
+    int x = CX + (int)(cosf(rad) * rr);
+    int y = CY + (int)(sinf(rad) * rr);
+    tft.fillCircle(x, y, 2, detected() ? C_AMBER : C_GREEN);
+  }
+
+  tft.fillCircle(CX, CY, 2, C_TEXT);
 }
 
 static void drawValues(bool force) {
   bool det = detected();
 
   if (force || g_dist != g_lastDist || det != g_lastDetect) {
-    tft.fillRect(9, 33, 68, 32, C_PANEL);
+    tft.fillRect(98, 30, 60, 26, C_BG);
     tft.setTextDatum(TL_DATUM);
-    tft.setTextFont(4);
-    tft.setTextColor(det ? C_AMBER : C_TEXT, C_PANEL);
-    tft.drawString(String(g_dist), 9, 33);
+    if (g_dist > 999) {
+      tft.setTextFont(2);
+      tft.drawString(String(g_dist), 99, 38);
+    } else {
+      tft.setTextFont(4);
+      tft.drawString(String(g_dist), 99, 30);
+    }
     tft.setTextFont(1);
-    tft.setTextColor(C_DIM, C_PANEL);
-    tft.drawString("cm", 60, 57);
+    tft.setTextColor(C_DIM, C_BG);
+    tft.drawString("cm", 99, 56);
 
-    tft.fillRect(9, 66, 68, 10, C_PANEL);
+    tft.fillRect(98, 66, 60, 10, C_BG);
     tft.setTextFont(1);
-    tft.setTextColor(det ? C_AMBER : C_GREEN, C_PANEL);
-    tft.drawString(det ? "TERDETEKSI" : "AREA BERSIH", 9, 68);
+    tft.setTextColor(det ? C_AMBER : C_GREEN, C_BG);
+    tft.drawString(det ? "TERDETEKSI" : "AMAN", 99, 66);
 
     g_lastDist = g_dist;
     g_lastDetect = det;
   }
 
   if (force || g_count != g_lastCount) {
-    tft.fillRect(89, 33, 64, 30, C_PANEL);
+    tft.fillRect(98, 86, 60, 28, C_BG);
     tft.setTextDatum(TR_DATUM);
     if (g_count > 999) {
       tft.setTextFont(2);
-      tft.drawString(String(g_count), 151, 43);
+      tft.drawString(String(g_count), 156, 94);
     } else {
       tft.setTextFont(4);
-      tft.drawString(String(g_count), 151, 33);
+      tft.drawString(String(g_count), 156, 86);
     }
     tft.setTextDatum(TL_DATUM);
     g_lastCount = g_count;
@@ -135,35 +164,20 @@ static void drawStatic() {
   tft.setTextDatum(TL_DATUM);
   tft.setTextFont(2);
   tft.setTextColor(C_TEXT, C_PANEL);
-  tft.drawString("DETEKTOR AIR", 6, 2);
+  tft.drawString("DETEKTOR AIR", 4, 2);
   tft.setTextFont(1);
   tft.setTextColor(C_GREEN, C_PANEL);
   tft.drawString("v2.0.1", 124, 6);
 
-  drawTile(4, 24, 76, 54);
-  drawTile(84, 24, 72, 54);
+  tft.drawFastVLine(96, 20, 106, C_EDGE);
 
   tft.setTextFont(1);
-  tft.setTextColor(C_DIM, C_PANEL);
-  tft.drawString("JARAK", 9, 27);
-  tft.drawString("PASSES", 89, 27);
-  tft.setTextColor(C_GREEN, C_PANEL);
-  tft.drawString("INDUKTIF", 89, 68);
+  tft.setTextColor(C_DIM, C_BG);
+  tft.drawString("JARAK", 99, 22);
+  tft.drawString("PASSES", 99, 78);
+  tft.drawString(String("MAX ") + g_maxRange, 99, 114);
 
-  tft.fillRoundRect(4, 82, 152, 28, 5, C_PANEL);
-  tft.drawRoundRect(4, 82, 152, 28, 5, C_EDGE);
-  tft.drawFastHLine(10, 83, 140, C_GREEN);
-  tft.setTextFont(1);
-  tft.setTextColor(C_DIM, C_PANEL);
-  tft.drawString("RIWAYAT", 8, 84);
-
-  tft.setTextFont(1);
-  tft.setTextColor(C_DIM, C_PANEL);
-  tft.drawString(String("MAX ") + g_maxRange + " cm", 6, 114);
-  tft.setTextColor(C_GREEN, C_PANEL);
-  tft.drawString("SONAR", 128, 114);
-
-  drawHistory();
+  drawRadar();
   drawValues(true);
 }
 
@@ -190,7 +204,11 @@ inline void setConfig(int maxRange, int alertCm) {
   g_lastCount = 0xFFFFFFFF;
 }
 
-inline void addReading(int distance) {
+inline void addReading(int distance, int angle) {
+  if (angle != g_angle) {
+    g_dir = (angle > g_angle) ? 1 : -1;
+    g_angle = constrain(angle, 0, 180);
+  }
   g_dist = distance > 0 ? distance : 0;
 }
 
@@ -206,19 +224,17 @@ inline void loop() {
     drawStatic();
   }
 
+  if ((int32_t)(now - g_nextRadar) >= 0) {
+    g_nextRadar = now + 200;
+    drawRadar();
+  }
+
   bool det = detected();
   if (g_dist != g_lastDist || g_count != g_lastCount || det != g_lastDetect) {
     drawValues(false);
     g_lastDist = g_dist;
     g_lastCount = g_count;
     g_lastDetect = det;
-  }
-
-  if ((int32_t)(now - g_nextMs) >= 0) {
-    g_nextMs = now + 250;
-    g_hist[g_histIdx] = (uint8_t)constrain(g_dist, 0, 255);
-    g_histIdx = (g_histIdx + 1) % HISTORY_LEN;
-    drawHistory();
   }
 }
 

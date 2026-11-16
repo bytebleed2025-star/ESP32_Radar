@@ -904,7 +904,7 @@ static void measureAtCurrent() {
   g_lastMeasurement = distance;
 
   NextionUI::addReading(g_angle, distance);
-  St7735UI::addReading(distance);
+  St7735UI::addReading(distance, g_angle);
 
   char buf[80];
   int n = snprintf(buf, sizeof(buf), "{\"a\":%d,\"d\":%d,\"mx\":%d}",
@@ -912,8 +912,12 @@ static void measureAtCurrent() {
   webSocket.broadcastTXT(buf, n);
 }
 
-// v2.0: the HC-SR04 is fixed in one direction; there is no servo sweep.
+// v2.0.1: virtual sweep for the web/TFT radar wipe. The HC-SR04 itself is
+// fixed-direction; the angle is a display animation, not a physical bearing.
 static void takeStep() {
+  g_angle += g_direction * 3;
+  if (g_angle > 180) { g_angle = 360 - g_angle; g_direction = -1; }
+  if (g_angle < 0)   { g_angle = -g_angle;     g_direction =  1; }
   measureAtCurrent();
 }
 

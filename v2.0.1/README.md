@@ -25,9 +25,9 @@ Checksums: [`../bin/v2.0.1/SHA256SUMS.txt`](../bin/v2.0.1/SHA256SUMS.txt).
 
 ## Renders
 
-| Modern UI — idle | Modern UI — detected |
+| Animated radar — idle | Animated radar — detected |
 |---|---|
-| ![](st7735-modern-idle.png) | ![](st7735-modern-detect.png) |
+| ![](st7735-radar-idle.png) | ![](st7735-radar-detect.png) |
 
 | Boot logo |
 |---|
@@ -36,6 +36,13 @@ Checksums: [`../bin/v2.0.1/SHA256SUMS.txt`](../bin/v2.0.1/SHA256SUMS.txt).
 ![Web UI desktop](web-desktop.png)
 
 ![Web UI mobile](web-mobile.png)
+
+## Animated sweep
+
+The firmware generates a virtual **0° → 180° → 0°** sweep at 3° per 100 ms.
+The web UI follows the same `a` angle, so the beam wipes continuously. The
+ST7735 draws a mini PPI radar at the same bearing. The HC-SR04 is still
+fixed-direction; the sweep is a display animation, not a physical bearing.
 
 ## Hardware
 
@@ -110,7 +117,7 @@ and OTA pages.
 pio run -e esp32dev
 ```
 
-PlatformIO result: **1,158,061 bytes (58.9%) flash**, **51,488 bytes (15.7%)
+PlatformIO result: **1,162,289 bytes (59.1%) flash**, **51,456 bytes (15.7%)
 RAM**.
 
 The verified display configuration is:
@@ -207,5 +214,6 @@ SWSPI TEST DONE
 - The buzzer timing values are clamped to 50–60000 ms; alert hold is
   0–600000 ms.
 - OTA leaves the NVS counter, buzzer timings and WiFi settings intact.
-- The modern UI uses rounded tiles, a large distance readout, a pass counter
-  and a 46-sample history sparkline.
+- The modern UI uses a mini PPI radar with a virtual 0–180° wipe, a large
+  distance readout, a pass counter, and a status indicator.
+- The web UI and ST7735 use the same virtual sweep angle from the firmware.
