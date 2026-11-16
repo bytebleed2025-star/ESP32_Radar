@@ -25,9 +25,13 @@ Checksums: [`../bin/v2.0.1/SHA256SUMS.txt`](../bin/v2.0.1/SHA256SUMS.txt).
 
 ## Renders
 
-| ST7735 boot | ST7735 idle | ST7735 detected |
-|---|---|---|
-| ![](../v2.0/st7735-boot.png) | ![](../v2.0/st7735-idle.png) | ![](../v2.0/st7735-detect.png) |
+| Modern UI — idle | Modern UI — detected |
+|---|---|
+| ![](st7735-modern-idle.png) | ![](st7735-modern-detect.png) |
+
+| Boot logo |
+|---|
+| ![](../v2.0/st7735-boot.png) |
 
 ![Web UI desktop](web-desktop.png)
 
@@ -106,8 +110,21 @@ and OTA pages.
 pio run -e esp32dev
 ```
 
-PlatformIO result: **1,182,189 bytes (60.1%) flash**, **51,440 bytes (15.7%)
+PlatformIO result: **1,158,061 bytes (58.9%) flash**, **51,488 bytes (15.7%)
 RAM**.
+
+The verified display configuration is:
+
+```text
+ST7735_GREENTAB
+HSPI
+SPI 1 MHz
+MISO = GPIO12
+```
+
+This was confirmed with the `HWSPI-hspi-1mhz` test on the actual panel. The
+1 MHz clock is deliberate: it is reliable on breadboard jumper wiring. It can
+be increased later if the wiring is short and shielded.
 
 ESP8266Audio and the embedded MP3/WAV arrays are no longer linked, so the
 firmware is smaller than v2.0.
@@ -183,10 +200,12 @@ SWSPI TEST DONE
 
 ## Notes
 
-- The ST7735 is the same 1.8" 128×160 SPI, no-touch module used in v2.0.
-- If the display is blank or offset, use the v2.0 ST7735S `REDTAB` /
-  `GREENTAB` OTA variants from `bin/v2.0/variants/` (the display code is the
-  same).
+- The working ST7735 configuration is `ST7735_GREENTAB`, HSPI, **1 MHz**,
+  `MISO=GPIO12`. Keep `platformio.ini` and `st7735_ui.h` in sync if you change
+  it.
+- The board can be a 30-pin or 38-pin ESP32-WROOM-32.
 - The buzzer timing values are clamped to 50–60000 ms; alert hold is
   0–600000 ms.
 - OTA leaves the NVS counter, buzzer timings and WiFi settings intact.
+- The modern UI uses rounded tiles, a large distance readout, a pass counter
+  and a 46-sample history sparkline.

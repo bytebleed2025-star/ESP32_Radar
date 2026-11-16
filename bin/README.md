@@ -22,9 +22,10 @@ Web OTA: **CONFIG → UPDATE FIRMWARE – OTA** → choose
 
 Checksums: [`v2.0.1/SHA256SUMS.txt`](v2.0.1/SHA256SUMS.txt).
 
-Features: ST7735 1.8" fixed-direction sonar, inductive pass counter, GPIO23
-buzzer with long idle / short alert patterns adjustable in the web UI, web OTA.
-No MAX98357A and no MP3/WAV.
+Features: ST7735 1.8" modern 160×128 tile UI, fixed-direction sonar, inductive
+pass counter, GPIO23 buzzer with long idle / short alert patterns adjustable in
+the web UI, web OTA. No MAX98357A and no MP3/WAV. Verified display config:
+`ST7735_GREENTAB`, HSPI, 1 MHz, MISO=GPIO12.
 
 ### v2.0.1 display init variants
 
