@@ -56,6 +56,7 @@
 #include <esp_ota_ops.h>
 #include <ArduinoOTA.h>
 #include <WebSocketsServer.h>
+#include <BluetoothSerial.h>
 
 #include "web_assets.h"
 
@@ -73,7 +74,9 @@
  *  VERSION
  * ------------------------------------------------------------------------ */
 
-#define FW_VERSION "2.0.1"
+#define FW_VERSION "2.0.3"
+#define BT_NAME    "DetektorAir"
+#define BT_PIN     "1234"
 #define FW_BUILD   __DATE__ " " __TIME__
 
 /* --------------------------------------------------------------------------
@@ -115,6 +118,7 @@ static const uint16_t STEP_INTERVAL_MS = 100;
 
 WebServer server(80);
 WebSocketsServer webSocket(81);
+BluetoothSerial SerialBT;
 Preferences prefs;
 
 static String g_staSsid, g_staPass, g_apSsid, g_apPass, g_hostname;
@@ -140,6 +144,8 @@ static unsigned long g_lastStaAttempt = 0;
 
 static bool g_otaActive = false;
 static bool g_otaOk     = false;
+static bool g_btClientWas = false;
+static String g_btLine;
 static String g_otaError;
 static unsigned long g_rebootAt = 0;
 
@@ -363,6 +369,7 @@ static void sendConfig(uint8_t num) {
                    (unsigned long)Proximity::count());
   if (num == 255) webSocket.broadcastTXT(buf, n);
   else            webSocket.sendTXT(num, buf, n);
+  if (SerialBT.hasClient()) SerialBT.println(buf);
 
   NextionUI::setConfig(maxRangeCm, g_paused, g_alertCm,
                        g_handMode,
@@ -377,6 +384,7 @@ static void broadcastProx() {
   int n = snprintf(buf, sizeof(buf), "{\"pc\":%lu}",
                    (unsigned long)Proximity::count());
   webSocket.broadcastTXT(buf, n);
+  if (SerialBT.hasClient()) SerialBT.println(buf);
   St7735UI::setProximity(Proximity::count());
 }
 
@@ -896,6 +904,66 @@ static void startOta() {
  *  SCAN
  * ------------------------------------------------------------------------ */
 
+static void handleBtCommand(const String &cmd) {
+  if (cmd.length() < 2) return;
+
+  switch (cmd[0]) {
+    case 'C':
+      if (cmd[1] == '0') {
+        Proximity::reset();
+        broadcastProx();
+      }
+      break;
+
+    case 'B':
+      Buzzer::setEnabled(cmd[1] == '1');
+      sendConfig(255);
+      break;
+
+    case 'Y':
+      Buzzer::setActive(cmd[1] == '1');
+      sendConfig(255);
+      break;
+
+    case 'Z': {
+      unsigned long lo, lf, so, sf, hd;
+      if (sscanf(cmd.c_str() + 1, "%lu,%lu,%lu,%lu,%lu",
+                 &lo, &lf, &so, &sf, &hd) == 5) {
+        Buzzer::setTimings(lo, lf, so, sf, hd);
+      }
+      sendConfig(255);
+      break;
+    }
+
+    case 'R':
+      maxRangeCm = constrain(cmd.substring(1).toInt(), 40, 400);
+      sendConfig(255);
+      break;
+
+    case 'T':
+      g_alertCm = constrain(cmd.substring(1).toInt(), 10, 150);
+      sendConfig(255);
+      break;
+
+    default:
+      break;
+  }
+}
+
+static void handleBluetooth() {
+  while (SerialBT.available()) {
+    char c = (char)SerialBT.read();
+    if (c == '\n' || c == '\r') {
+      if (g_btLine.length()) {
+        handleBtCommand(g_btLine);
+        g_btLine = "";
+      }
+    } else if (g_btLine.length() < 63) {
+      g_btLine += c;
+    }
+  }
+}
+
 static void measureAtCurrent() {
   int distance = 0;
   float cm = pingCm();
@@ -906,10 +974,12 @@ static void measureAtCurrent() {
   NextionUI::addReading(g_angle, distance);
   St7735UI::addReading(distance, g_angle);
 
-  char buf[80];
-  int n = snprintf(buf, sizeof(buf), "{\"a\":%d,\"d\":%d,\"mx\":%d}",
-                   g_angle, distance, maxRangeCm);
+  char buf[96];
+  int n = snprintf(buf, sizeof(buf), "{\"a\":%d,\"d\":%d,\"mx\":%d,\"pc\":%lu}",
+                   g_angle, distance, maxRangeCm,
+                   (unsigned long)Proximity::count());
   webSocket.broadcastTXT(buf, n);
+  if (SerialBT.hasClient()) SerialBT.println(buf);
 }
 
 // v2.0.1: virtual sweep for the web/TFT radar wipe. The HC-SR04 itself is
@@ -933,6 +1003,13 @@ void setup() {
   Serial.println(" DETEKTOR AIR LACAK - ESP32 Radar Sonar");
   Serial.println(" Version " FW_VERSION);
   Serial.println("==========================================");
+
+  if (!SerialBT.begin(BT_NAME)) {
+    Serial.println("Bluetooth init failed");
+  } else {
+    SerialBT.setPin(BT_PIN);
+    Serial.printf("Bluetooth SPP: %s  PIN %s\n", BT_NAME, BT_PIN);
+  }
 
   pinMode(PIN_TRIG, OUTPUT);
   pinMode(PIN_ECHO, INPUT);
@@ -1024,6 +1101,16 @@ void loop() {
   ArduinoOTA.handle();
   NextionUI::loop();
   St7735UI::loop();
+
+  if (SerialBT.hasClient()) {
+    if (!g_btClientWas) {
+      g_btClientWas = true;
+      sendConfig(255);
+    }
+  } else {
+    g_btClientWas = false;
+  }
+  handleBluetooth();
 
   if (g_rebootAt && (long)(millis() - g_rebootAt) >= 0) {
     Serial.println("Rebooting...");

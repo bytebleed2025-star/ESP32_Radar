@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- * v2.0.1 ST7735 160x128 landscape UI: animated PPI radar + data column.
+ * v2.0.3 ST7735 160x128 landscape UI: animated PPI radar + data column.
  *
  * SCLK 14, MOSI 13, MISO 12, CS 27, DC 26, RST 25, BL 32.
  * ST7735S panel, GREENTAB init, 1 MHz HSPI (verified on breadboard wiring).
@@ -162,7 +162,7 @@ static void drawStatic() {
   tft.drawString("DETEKTOR AIR", 4, 2);
   tft.setTextFont(1);
   tft.setTextColor(C_GREEN, C_PANEL);
-  tft.drawString("v2.0.1", 124, 6);
+  tft.drawString("v2.0.3", 124, 6);
 
   tft.drawFastVLine(96, 20, 106, C_EDGE);
 

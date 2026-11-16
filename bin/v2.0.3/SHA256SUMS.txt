@@ -1,0 +1,3 @@
+9a0cedc56f23b0debea8561893be5ce7b0fdf7476728cee523914ceafdd5fadf  DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin
+5f83c3d079108ebe3f2b51761e58178ec5d9ce38f3d8e9e50526cf646a9ec896  DetektorAir-v2.0.3-ST7735-WiFi-BT-ota.bin
+3def35b2444741d75e0f645bcd7cd5e8bae79b7cf6dfc17115f100473568404e  DetektorAir-Bluetooth-v2.0.3.apk

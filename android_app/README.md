@@ -1,153 +1,66 @@
-# Detektor Air LACAK — Android APK
+# DetektorAir Android APK (Bluetooth)
 
-A thin **WebView wrapper** for the ESP32 radar web UI. It does not duplicate the
-radar UI: the ESP32 serves the normal web app, and the APK opens it in a
-full-screen Android WebView with a local connection screen.
+The APK connects to the ESP32 over **Bluetooth Classic SPP** and hosts the radar
+UI locally in a WebView. No WiFi, hotspot, HTTP or WebSocket is used.
 
-The web UI, Config tab, AP+STA, OTA and Nextion work exactly as before.
+## Pairing
 
----
+1. Power the ESP32.
+2. Android: **Settings → Bluetooth → Pair new device → DetektorAir**.
+3. PIN: **1234**.
+4. Install and open `DetektorAir-Bluetooth-v2.0.3.apk`.
+5. Select `DetektorAir` and tap **HUBUNGKAN**.
 
-## Built APK
-
-```
-DetektorAir-debug.apk
-```
-
-The final APK is also copied to the project root by the build:
-
-`C:\Users\fitri\Documents\OPENCODE\ESP32_Radar\DetektorAir-debug.apk`
-
-Current build: **~192 KB**, version **1.1**, debug-signed, `minSdk 24`
-(Android 7+), `targetSdk 34`. The connection screen uses the same modern
-dark-card theme as the radar UI.
-
-The APK is built with:
-
-- Android SDK Platform 34
-- Build-Tools 34.0.0
-- Android Gradle Plugin 8.5.2
-- Gradle 8.7
-- Java 21 (Temurin)
-- No AndroidX — platform `Activity`/`WebView` only
-
-The machine’s i7-2600 is too old for the latest Android Studio, so this project
-is built with the **command-line SDK tools**, not the IDE.
-
----
+Press **Back** while the radar is shown to disconnect and return to the device
+list.
 
 ## Build
 
-Prerequisites:
+From the repository root:
 
-- Android SDK at `%LOCALAPPDATA%\Android\Sdk` (already installed)
-- `local.properties` with `sdk.dir` (created automatically by the script)
-- Java 21 (`JAVA_HOME` already set)
-
-Run:
-
-```bat
-build_apk.bat
+```powershell
+python tools\build_apk_assets.py
+cd android_app
+.\gradlew.bat assembleDebug
 ```
 
-or:
+Output:
 
-```bat
-gradlew.bat assembleDebug
+```text
+android_app/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The first wrapper build downloads Gradle 8.7 and the Android Gradle Plugin
-dependencies. The output is:
+The release copy is stored as:
 
-```
-app/build/outputs/apk/debug/app-debug.apk
-```
-
-`build_apk.bat` copies it to `DetektorAir-debug.apk`.
-
-> An `SDK XML version 4` warning may appear because the 2026 command-line tools
-> are newer than AGP 8.5.2. The build still succeeds; this is harmless for the
-> CLI build.
-
----
-
-## Install on the phone
-
-1. On the phone: **Settings → About → tap Build number 7×** to enable
-   Developer options.
-2. Enable **USB debugging**.
-3. Connect the phone by a **data** USB cable and accept the authorization
-   prompt.
-4. Run:
-
-   ```bat
-   install_apk.bat
-   ```
-
-Or copy `DetektorAir-debug.apk` to the phone and install it manually (allow
-“Install unknown apps” for the file manager).
-
-Check the connection:
-
-```bat
-%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe devices
+```text
+bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk
 ```
 
-No device attached at build time was available to test the APK on this PC.
+## How it works
 
----
+- `MainActivity` lists paired Bluetooth devices.
+- It opens an RFCOMM socket to the SPP UUID
+  `00001101-0000-1000-8000-00805F9B34FB`.
+- The ESP32 sends newline-delimited JSON; the app forwards each line into the
+  WebView via `window.__btDeliver(...)`.
+- The WebView's WebSocket is replaced by a Bluetooth transport shim
+  (`window.AndroidBT.send(...)`), so the existing radar UI works unchanged.
+- The CONFIG tab is hidden in the APK; firmware/network settings are not
+  available over Bluetooth.
 
-## Using the app
+## Permissions
 
-1. Power the ESP32 radar.
-2. Join the phone to the **`DetektorAir` hotspot** (password
-   `radar12345`), **or** to the same home WiFi as the ESP32.
-3. Open **Detektor Air LACAK**.
-4. Enter the address:
-   - Hotspot: **`192.168.4.1`**
-   - Home WiFi: the ESP32 **STA IP** shown in the radar’s Config tab/serial
-     monitor
-5. Tap **BUKA RADAR**.
-6. To return to the connection screen, press **Back**. Press Back again to
-   exit.
+- Android 12+: `BLUETOOTH_CONNECT` (requested at first launch).
+- Android 11 and below: legacy `BLUETOOTH` / `BLUETOOTH_ADMIN`.
+- The app only lists **already paired** devices. Pairing is done in Android
+  Bluetooth settings.
 
-The address is saved, so the next launch opens with it prefilled.
+## Limits
 
-### What the wrapper supports
-
-- Full-screen WebView, keep-screen-on, immersive UI
-- JavaScript, DOM storage, `localStorage` (web UI settings)
-- HTTP **and WebSocket `ws://`** on the local network
-- WebAudio (sonar ping)
-- Android JS dialogs (`alert` / `confirm` / `prompt`) used by OTA/reboot
-- **File chooser for web OTA** (`<input type="file">` → pick the `.bin`)
-- Back-to-settings, connection error screen, saved IP
-- Cleartext HTTP allowed via manifest + network security config (local device
-  only)
-
-### Limitations
-
-- The app is only a shell. If the ESP32 web server is not reachable, it shows
-  the connection screen with an error.
-- Android restricts programmatic WiFi connections; join the hotspot manually
-  (the **PENGATURAN WIFI** button helps).
-- The APK is debug-signed. To distribute it, create your own release keystore
-  and sign a release build.
-- Cleartext HTTP/WS is enabled for this local-network app; do not expose the
-  device to untrusted networks.
-- The app was built and manifest-verified here, but not run on a physical phone
-  in this environment.
-
----
-
-## Troubleshooting
-
-| Problem | Check |
-|---|---|
-| App cannot connect | Phone on BUKA RADAR’s WiFi? Correct IP? Try `http://192.168.4.1` in Chrome first. |
-| LINK stays TERPUTUS in the web UI | WebSocket port 81 blocked / wrong network; same as browser usage. |
-| Web OTA file picker doesn’t open | Use the CONFIG tab → choose `.bin`; the app implements the Android file chooser. |
-| APK install fails | Android 7+, USB debugging, data cable, accept the RSA prompt, or copy the APK and install manually. |
-| Gradle build fails with SDK not found | Check `local.properties` (`sdk.dir=C:/Users/.../Android/Sdk`) and `ANDROID_HOME`. |
-| `SDK XML version 4` warning | Harmless with AGP 8.5.2; the build completes. |
-| Old page after firmware update | Press Back → BUKA RADAR to reload; the ESP32 serves no-cache HTML. |
+- Bluetooth Classic only; no iOS/BLE support.
+- One Bluetooth client at a time.
+- Debug-signed APK; enable “install unknown apps” on the phone.
+- The APK works with the v2.0.3 hybrid firmware (WiFi+BT) and the v2.0.2
+  Bluetooth-only firmware.
+- In v2.0.3, firmware updates remain available through the WiFi web UI. In
+  v2.0.2, updates are USB-only.

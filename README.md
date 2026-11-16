@@ -1,11 +1,11 @@
 # LACAK DETEKTOR AIR
 
-**ESP32 · HC-SR04 · ST7735 · GPIO23 buzzer · inductive counter · web UI**
+**ESP32 · HC-SR04 · ST7735 · WiFi AP+STA · Bluetooth SPP · buzzer · Android APK**
 
-> This is the **v2.0.1** branch: v2.0 fixed-direction build with the MAX98357A
-> I2S audio replaced by a GPIO23 buzzer. Long idle beep and short alert beep
-> timings are adjustable in the web UI.
-> See [`v2.0.1/README.md`](v2.0.1/README.md).
+> This is the **v2.0.3** branch: v2.0.1 WiFi AP+STA, web UI and OTA **plus**
+> Bluetooth Classic SPP for the Android APK. Both transports share the ESP32
+> 2.4 GHz radio.
+> See [`v2.0.3/README.md`](v2.0.3/README.md).
 >
 > The original v1 servo build is documented in the rest of this file.
 
@@ -303,12 +303,12 @@ WebSocket, WebAudio, file-picker OTA and Back-to-settings. See
 All downloadable firmware is under [`bin/`](bin/README.md):
 
 ```text
-bin/v2.0.1/DetektorAir-v2.0.1-ST7735-factory.bin   v2.0.1 ST7735+buzzer factory (0x0)
-bin/v2.0.1/DetektorAir-v2.0.1-ST7735-ota.bin       v2.0.1 ST7735+buzzer OTA
-bin/v2.0/DetektorAir-v2.0-ST7735-factory.bin       previous v2.0 ST7735 factory
-bin/v2.0/DetektorAir-v2.0-ST7735-ota.bin           previous v2.0 ST7735 OTA
-bin/legacy/DetektorAir-ota.bin                     older Nextion / servo OTA build
-DetektorAir-debug.apk                              Android WebView APK
+bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin   hybrid WiFi+BT factory (0x0)
+bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk                Android BT app
+bin/v2.0.1/DetektorAir-v2.0.1-ST7735-factory.bin            previous WiFi factory
+bin/v2.0.1/DetektorAir-v2.0.1-ST7735-ota.bin                previous WiFi OTA
+bin/legacy/DetektorAir-ota.bin                              older Nextion / servo OTA
+DetektorAir-debug.apk                                       older WiFi WebView APK
 ```
 
 For the Nextion display, ship only:
@@ -327,18 +327,19 @@ For a completely blank ESP32, use one of the merged images and flash it at
 **0x0**:
 
 ```text
-bin/v2.0.1/DetektorAir-v2.0.1-ST7735-factory.bin   current v2.0.1 ST7735+buzzer build
-bin/v2.0/DetektorAir-v2.0-ST7735-factory.bin       previous v2.0 ST7735 build
-bin/legacy/DetektorAir-Nextion-factory.bin         Nextion display build (servo)
-bin/legacy/DetektorAir-ST7735-factory.bin          older ST7735 servo build
+bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin   current hybrid WiFi+BT build
+bin/v2.0.1/DetektorAir-v2.0.1-ST7735-factory.bin            previous WiFi build
+bin/v2.0/DetektorAir-v2.0-ST7735-factory.bin                previous v2.0 build
+bin/legacy/DetektorAir-Nextion-factory.bin                  Nextion display build (servo)
+bin/legacy/DetektorAir-ST7735-factory.bin                    older ST7735 servo build
 ```
 
-> For the **v2.0.1 buzzer** build (ST7735, no MAX98357A), download
-> [`bin/v2.0.1/DetektorAir-v2.0.1-ST7735-factory.bin`](bin/v2.0.1/DetektorAir-v2.0.1-ST7735-factory.bin).
-> The v2.0 image uses the MAX98357A MP3/WAV audio.
+> For the **v2.0.3 hybrid** build, download
+> [`bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin`](bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin)
+> and install [`bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk`](bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk).
 
 ```cmd
-esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.0.1\DetektorAir-v2.0.1-ST7735-factory.bin
+esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.0.3\DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin
 ```
 
 The merged image contains:

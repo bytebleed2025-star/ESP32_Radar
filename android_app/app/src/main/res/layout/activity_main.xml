@@ -160,24 +160,19 @@
                     android:textColor="@color/dim"
                     android:textSize="8sp" />
 
-                <EditText
-                    android:id="@+id/ip_input"
+                <ListView
+                    android:id="@+id/device_list"
                     android:layout_width="match_parent"
-                    android:layout_height="54dp"
+                    android:layout_height="150dp"
                     android:layout_marginTop="7dp"
                     android:background="@drawable/bg_input"
-                    android:fontFamily="monospace"
-                    android:hint="@string/ip_hint"
-                    android:imeOptions="actionGo"
-                    android:inputType="textUri"
-                    android:maxLines="1"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp"
-                    android:selectAllOnFocus="true"
-                    android:singleLine="true"
-                    android:textColor="@color/green_bright"
-                    android:textColorHint="@color/dim"
-                    android:textSize="16sp" />
+                    android:choiceMode="singleChoice"
+                    android:divider="#153826"
+                    android:dividerHeight="1dp"
+                    android:paddingStart="6dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="4dp" />
 
                 <Button
                     android:id="@+id/open"
