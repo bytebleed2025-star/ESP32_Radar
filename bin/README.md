@@ -41,6 +41,22 @@ are identical to v2.0.1 except for the ST7735 init sequence and a lower
 Upload them through the web OTA page. Try INITB first, then REDTAB, then
 GREENTAB.
 
+### v2.0.1 diagnostic test firmware
+
+If all normal images stay white, flash this **factory** image at **0x0** over
+USB. It does not use the radar code; it only initializes the ST7735 at 15 MHz
+and cycles red → green → blue, then prints `ST7735 OK`.
+
+[`v2.0.1/test/DetektorAir-v2.0.1-ST7735-test-factory.bin`](v2.0.1/test/DetektorAir-v2.0.1-ST7735-test-factory.bin)
+
+Serial output at 115200 should show:
+
+```text
+ST7735 TEST BOOT
+TFT 160 x 128
+ST7735 TEST DONE
+```
+
 > Do **not** upload the `-factory.bin` through the web OTA page. It is a merged
 > image for offset `0x0`, not an application image.
 

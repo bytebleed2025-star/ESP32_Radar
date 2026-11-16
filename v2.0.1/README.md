@@ -139,6 +139,27 @@ If all three stay white, the problem is wiring, the FPC ribbon, or power, not
 the firmware. Recheck `SCL=GPIO14`, `SDA=GPIO13`, `RST=GPIO25`, `DC=GPIO26`,
 `CS=GPIO27`, `VDD=3.3 V`, `GND=GND`.
 
+### Diagnostic test firmware
+
+Flash this **factory** image at **0x0** over USB. It contains only a minimal
+ST7735 test: 15 MHz, red → green → blue, then `ST7735 OK`.
+
+[`../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-test-factory.bin`](../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-test-factory.bin)
+
+Serial at 115200 should print:
+
+```text
+ST7735 TEST BOOT
+TFT 160 x 128
+ST7735 TEST DONE
+```
+
+- Serial prints but the screen stays white → display, ribbon, or controller
+  power problem.
+- Screen cycles red/green/blue → the panel works; the issue is in the radar UI
+  init/config.
+- No serial output → the test image did not boot; reflash at 0x0 and press EN.
+
 ## Notes
 
 - The ST7735 is the same 1.8" 128×160 SPI, no-touch module used in v2.0.

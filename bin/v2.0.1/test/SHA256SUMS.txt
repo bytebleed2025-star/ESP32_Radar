@@ -1,0 +1,1 @@
+ae786ec8caa1d5dcb8355400cdfe1aef19fd336a8491325957db06726d96973b  DetektorAir-v2.0.1-ST7735-test-factory.bin
