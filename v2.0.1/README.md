@@ -152,6 +152,12 @@ the ESP32 HSPI peripheral completely:
 - [`../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-greentab-factory.bin`](../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-greentab-factory.bin)
 - [`../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-redtab-factory.bin`](../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-redtab-factory.bin)
 
+If software SPI works but TFT_eSPI stays white, try the hardware-SPI tests at
+**1 MHz with MISO=GPIO12**:
+
+- [`../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-HWSPI-hspi-1mhz-factory.bin`](../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-HWSPI-hspi-1mhz-factory.bin)
+- [`../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-HWSPI-vspi-1mhz-factory.bin`](../bin/v2.0.1/test/DetektorAir-v2.0.1-ST7735-HWSPI-vspi-1mhz-factory.bin)
+
 Serial at 115200 should print:
 
 ```text

@@ -54,6 +54,11 @@ If it stays white, try the **software-SPI** tests, which bypass TFT_eSPI/HSPI:
 - [`v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-greentab-factory.bin`](v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-greentab-factory.bin)
 - [`v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-redtab-factory.bin`](v2.0.1/test/DetektorAir-v2.0.1-ST7735-SWSPI-redtab-factory.bin)
 
+Hardware-SPI tests at **1 MHz, MISO=GPIO12**:
+
+- [`v2.0.1/test/DetektorAir-v2.0.1-ST7735-HWSPI-hspi-1mhz-factory.bin`](v2.0.1/test/DetektorAir-v2.0.1-ST7735-HWSPI-hspi-1mhz-factory.bin)
+- [`v2.0.1/test/DetektorAir-v2.0.1-ST7735-HWSPI-vspi-1mhz-factory.bin`](v2.0.1/test/DetektorAir-v2.0.1-ST7735-HWSPI-vspi-1mhz-factory.bin)
+
 Serial output at 115200 should show:
 
 ```text
