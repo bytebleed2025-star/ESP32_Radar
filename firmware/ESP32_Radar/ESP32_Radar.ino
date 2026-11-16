@@ -225,7 +225,7 @@ static bool otaCapable() {
  * ------------------------------------------------------------------------ */
 
 static void loadConfig() {
-  prefs.begin("lacak", true);
+  prefs.begin("lacak", false);   // create the namespace on first boot
   g_staSsid  = prefs.isKey("sta_ssid") ? prefs.getString("sta_ssid", "") : String(STA_SSID);
   g_staPass  = prefs.isKey("sta_pass") ? prefs.getString("sta_pass", "") : String(STA_PASS);
   g_apSsid   = prefs.isKey("ap_ssid")  ? prefs.getString("ap_ssid", "")  : String(AP_SSID);
