@@ -3,6 +3,25 @@
 All downloadable ESP32 images are kept under `bin/`. Pick the folder that
 matches your build.
 
+## v2.0.2 — Bluetooth SPP + Android APK (current)
+
+File: [`v2.0.2/`](v2.0.2/)
+
+| File | Use |
+|---|---|
+| [`v2.0.2/DetektorAir-v2.0.2-ST7735-BT-factory.bin`](v2.0.2/DetektorAir-v2.0.2-ST7735-BT-factory.bin) | blank / new board, flash at **0x0** |
+| [`v2.0.2/DetektorAir-v2.0.2-ST7735-BT-ota.bin`](v2.0.2/DetektorAir-v2.0.2-ST7735-BT-ota.bin) | optional one-time update from v2.0.1 |
+| [`v2.0.2/DetektorAir-Bluetooth-v2.0.2.apk`](v2.0.2/DetektorAir-Bluetooth-v2.0.2.apk) | Android Bluetooth app |
+
+```cmd
+esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.0.2\DetektorAir-v2.0.2-ST7735-BT-factory.bin
+```
+
+Bluetooth Classic SPP: name `DetektorAir`, PIN `1234`. No WiFi AP/STA and no
+web OTA; firmware updates are USB-only after this build.
+
+Checksums: [`v2.0.2/SHA256SUMS.txt`](v2.0.2/SHA256SUMS.txt).
+
 ## v2.0.1 — ST7735 + buzzer (current ST7735 build)
 
 File: [`v2.0.1/`](v2.0.1/)
