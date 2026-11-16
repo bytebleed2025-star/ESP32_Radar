@@ -121,16 +121,11 @@ static void drawValues(bool force) {
   if (force || g_dist != g_lastDist || det != g_lastDetect) {
     tft.fillRect(98, 30, 60, 26, C_BG);
     tft.setTextDatum(TL_DATUM);
-    if (g_dist > 999) {
-      tft.setTextFont(2);
-      tft.drawString(String(g_dist), 99, 38);
-    } else {
-      tft.setTextFont(4);
-      tft.drawString(String(g_dist), 99, 30);
-    }
+    tft.setTextFont(4);
+    tft.drawString(String(g_dist / 100.0f, 2), 99, 30);
     tft.setTextFont(1);
     tft.setTextColor(C_DIM, C_BG);
-    tft.drawString("cm", 99, 56);
+    tft.drawString("m", 99, 56);
 
     tft.fillRect(98, 66, 60, 10, C_BG);
     tft.setTextFont(1);
@@ -175,7 +170,7 @@ static void drawStatic() {
   tft.setTextColor(C_DIM, C_BG);
   tft.drawString("JARAK", 99, 22);
   tft.drawString("PASSES", 99, 78);
-  tft.drawString(String("MAX ") + g_maxRange, 99, 114);
+  tft.drawString(String("MAX ") + String(g_maxRange / 100.0f, 2) + "m", 99, 114);
 
   drawRadar();
   drawValues(true);

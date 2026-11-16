@@ -4,7 +4,7 @@
 #pragma once
 #include <pgmspace.h>
 
-static const unsigned int INDEX_HTML_LEN = 84950;
+static const unsigned int INDEX_HTML_LEN = 85046;
 static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 <!DOCTYPE html>
 <html lang="id">
@@ -648,13 +648,13 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 
         <div class="metric">
           <label>KONTAK TERDEKAT <small>NEAREST</small></label>
-          <div class="value"><span id="nearest">—</span><em>cm</em></div>
+          <div class="value"><span id="nearest">-</span><em>m</em></div>
           <div class="sub" id="nearest-angle">menunggu data</div>
         </div>
 
         <div class="metric">
           <label>GAUNG TERAKHIR <small>LAST ECHO</small></label>
-          <div class="value small"><span id="last">—</span><em>cm</em></div>
+          <div class="value small"><span id="last">-</span><em>m</em></div>
           <div class="sub" id="last-angle">—</div>
         </div>
 
@@ -681,7 +681,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       <section class="scope-wrap" id="scope-wrap">
         <canvas id="scope"></canvas>
         <div class="scope-badge" id="scope-badge">SONAR · FIXED</div>
-        <div class="scope-note" id="scope-note">RANGE — CM<br/>FIXED DIRECTION</div>
+        <div class="scope-note" id="scope-note">RANGE - M<br/>FIXED DIRECTION</div>
         <div class="offline" id="offline">SINYAL TERPUTUS<small>mencoba menyambung ulang…</small></div>
       </section>
 
@@ -707,12 +707,12 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
         <button class="btn hold-btn" id="hand-move" hidden>TAHAN = GERAK</button>
 
         <label class="slider">
-          <div class="slider-top"><span>JANGKAUAN <small>RANGE</small></span><b><span id="range-val">200</span> cm</b></div>
+          <div class="slider-top"><span>JANGKAUAN <small>RANGE</small></span><b><span id="range-val">2.00</span> m</b></div>
           <input id="range" type="range" min="40" max="400" step="10" value="200"/>
         </label>
 
         <label class="slider">
-          <div class="slider-top"><span>AMBANG AIR <small>WATER ALERT</small></span><b><span id="thr-val">50</span> cm</b></div>
+          <div class="slider-top"><span>AMBANG AIR <small>WATER ALERT</small></span><b><span id="thr-val">0.50</span> m</b></div>
           <input id="thr" type="range" min="10" max="150" step="5" value="50"/>
         </label>
 
@@ -965,6 +965,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 
   /* ---------- helpers ---------- */
   function clamp(v, a, b){ return Math.min(b, Math.max(a, v)); }
+  function meters(cm){ return (cm / 100).toFixed(2); }
   function fmtUp(sec){
     sec = Math.max(0, Math.floor(sec || 0));
     var h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
@@ -1451,7 +1452,7 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
   /* ---------- data ---------- */
   function syncRangeUI(){
     $("range").value = S.maxRange;
-    $("range-val").textContent = S.maxRange;
+    $("range-val").textContent = meters(S.maxRange);
     updateNote();
   }
   function syncSpeedUI(){
@@ -1460,12 +1461,12 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     updateNote();
   }
   function updateNote(){
-    $("scope-note").innerHTML = "RANGE " + S.maxRange + " CM<br/>FIXED DIRECTION" +
+    $("scope-note").innerHTML = "RANGE " + meters(S.maxRange) + " M<br/>FIXED DIRECTION" +
       (S.demo ? " · SIMULASI" : "");
   }
   function syncThresholdUI(){
     $("thr").value = S.threshold;
-    $("thr-val").textContent = S.threshold;
+    $("thr-val").textContent = meters(S.threshold);
   }
   function syncManualUI(){
     $("angle").value = S.manual;
@@ -2027,11 +2028,11 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     var near = nearestContact();
     var water = !!(near && near.d <= S.threshold);
 
-    $("nearest").textContent = near ? Math.round(near.d) : "—";
+    $("nearest").textContent = near ? meters(near.d) : "—";
     $("nearest-angle").textContent = near ? (Math.round(near.a) + "° · " + (water ? "AMBANG AIR" : "KONTAK")) : "menunggu data";
 
     if (S.lastEcho){
-      $("last").textContent = Math.round(S.lastEcho.d);
+      $("last").textContent = meters(S.lastEcho.d);
       $("last-angle").textContent = Math.round(S.lastEcho.a) + "° · " + (Math.max(0, Math.round((now - S.lastEcho.t) / 1000))) + "s lalu";
     } else {
       $("last").textContent = "—";
@@ -2048,11 +2049,11 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     if (water){
       box.classList.add("danger");
       title.textContent = "AIR TERDETEKSI";
-      sub.textContent = "kontak " + Math.round(near.d) + " cm · " + Math.round(near.a) + "°";
+      sub.textContent = "kontak " + meters(near.d) + " m · " + Math.round(near.a) + "°";
     } else {
       box.classList.remove("danger");
       title.textContent = "AREA BERSIH";
-      sub.textContent = "tidak ada kontak ≤ " + S.threshold + " cm";
+      sub.textContent = "tidak ada kontak ≤ " + meters(S.threshold) + " m";
     }
 
     if (water && !S.wasWater) ping(1040, 0.30, 0.11);
@@ -2111,20 +2112,20 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
     var rangeTimer = null, thrTimer = null, angleTimer = null;
 
     rangeEl.value = S.maxRange;
-    $("range-val").textContent = S.maxRange;
+    $("range-val").textContent = meters(S.maxRange);
     rangeEl.addEventListener("input", function(){
       S.maxRange = clamp(parseInt(rangeEl.value, 10) || 200, 40, 400);
-      $("range-val").textContent = S.maxRange;
+      $("range-val").textContent = meters(S.maxRange);
       updateNote();
       clearTimeout(rangeTimer);
       rangeTimer = setTimeout(function(){ send("R" + S.maxRange); }, 90);
     });
 
     thrEl.value = S.threshold;
-    $("thr-val").textContent = S.threshold;
+    $("thr-val").textContent = meters(S.threshold);
     thrEl.addEventListener("input", function(){
       S.threshold = clamp(parseInt(thrEl.value, 10) || 50, 10, 150);
-      $("thr-val").textContent = S.threshold;
+      $("thr-val").textContent = meters(S.threshold);
       savePrefs();
       clearTimeout(thrTimer);
       thrTimer = setTimeout(function(){ send("T" + S.threshold); }, 90);

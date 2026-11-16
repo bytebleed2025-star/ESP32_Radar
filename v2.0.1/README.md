@@ -117,8 +117,12 @@ and OTA pages.
 pio run -e esp32dev
 ```
 
-PlatformIO result: **1,162,289 bytes (59.1%) flash**, **51,456 bytes (15.7%)
+PlatformIO result: **1,163,169 bytes (59.2%) flash**, **51,456 bytes (15.7%)
 RAM**.
+
+All distance values are displayed in **meters** (`0.33 m`, `2.00 m`, etc.).
+The firmware still uses centimetres internally for the HC-SR04 and protocol;
+the web UI and ST7735 convert to metres for display.
 
 The verified display configuration is:
 
