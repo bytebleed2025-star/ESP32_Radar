@@ -29,6 +29,10 @@ Checksums: [`../bin/v2.0.1/SHA256SUMS.txt`](../bin/v2.0.1/SHA256SUMS.txt).
 |---|---|
 | ![](st7735-radar-idle.png) | ![](st7735-radar-detect.png) |
 
+Sweep positions at 30°, 90°, and 150°:
+
+![ST7735 sweep preview](st7735-radar-sweep.png)
+
 | Boot logo |
 |---|
 | ![](../v2.0/st7735-boot.png) |
