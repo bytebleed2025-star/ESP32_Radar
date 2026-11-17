@@ -14,6 +14,12 @@ The ESP32 shares one 2.4 GHz radio between WiFi and Bluetooth. Both can run at
 the same time, but heavy WiFi traffic can reduce Bluetooth responsiveness and
 vice versa.
 
+## Renders
+
+| Welcome (3 s) | Scan artwork + live values |
+|---|---|
+| ![](st7735-welcome.jpg) | ![](st7735-scan-overlay.png) |
+
 ## Download
 
 | File | Use |
@@ -57,16 +63,31 @@ PIN : 1234
 Both can be used at the same time: the web UI can stay open while the phone
 uses Bluetooth.
 
+## Display artwork
+
+- **WelcomeScreen.jpg** is shown for **3 seconds** after the display initializes.
+- Then the scan background is selected from **RadarScan_00..03**:
+
+| Frame | Condition |
+|---|---|
+| `RadarScan_00` | no echo / idle |
+| `RadarScan_01` | object farther than the water-alert threshold |
+| `RadarScan_02` | object inside the alert threshold |
+| `RadarScan_03` | object very close (half the alert threshold) |
+
+The distance and pass count are drawn in **FreeSansBold (modern sans)** inside
+the white boxes of the artwork.
+
 ## Build result
 
 ```text
-Firmware: 1,906,549 bytes (97.0%) flash
-RAM:         65,104 bytes (19.9%)
+Firmware: 1,909,853 bytes (97.1%) flash
+RAM:         68,712 bytes (21.0%)
 APK:        327,707 bytes, version 2.0.3
 ```
 
-> Flash usage is **97%** of the 1.875 MB OTA slot. It fits, but there is only
-> about 59 KB headroom. Avoid adding large new assets to this build.
+> Flash usage is **97.1%** of the 1.875 MB OTA slot. It fits, but there is only
+> about 56 KB headroom. Avoid adding large new assets to this build.
 
 ## Protocol
 

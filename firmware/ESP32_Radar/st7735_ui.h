@@ -1,13 +1,14 @@
 #pragma once
 
 /*
- * v2.0.3 ST7735 160x128 landscape UI: animated PPI radar + data column.
+ * v2.0.3 ST7735 160x128 UI.
  *
- * SCLK 14, MOSI 13, MISO 12, CS 27, DC 26, RST 25, BL 32.
- * ST7735S panel, GREENTAB init, 1 MHz HSPI (verified on breadboard wiring).
+ * WelcomeScreen.jpg is shown for 3 seconds, then the RadarScan_00..03
+ * backgrounds are selected by distance:
+ *   00 = idle, 01 = far, 02 = near, 03 = alert.
  *
- * The HC-SR04 is fixed-direction. The angle is a virtual sweep generated in
- * firmware and sent to both the web UI and this display.
+ * The white value boxes are part of the artwork; live values are overlaid in
+ * FreeSansBold (modern sans).
  */
 
 #ifndef USER_SETUP_LOADED
@@ -29,14 +30,15 @@
 #define LOAD_FONT1 1
 #define LOAD_FONT2 1
 #define LOAD_FONT4 1
+#define LOAD_GFXFF 1
 #define SPI_FREQUENCY 1000000
 #define TFT_RGB_ORDER TFT_BGR
 #endif
 
 #include <TFT_eSPI.h>
-#include <math.h>
+#include <TJpg_Decoder.h>
 
-#include "st7735_logo.h"
+#include "st7735_images.h"
 
 #define ST7735_WIDTH  160
 #define ST7735_HEIGHT 128
@@ -47,145 +49,96 @@ namespace St7735UI {
 static TFT_eSPI tft;
 
 static int      g_dist = 0;
-static int      g_angle = 90;
-static int      g_dir = 1;
 static int      g_maxRange = 200;
 static int      g_alertCm = 50;
 static uint32_t g_count = 0;
+static int      g_frame = -1;
+static int      g_pendingFrame = -1;
+static uint32_t g_pendingSince = 0;
 
 static int      g_lastDist = -1;
 static uint32_t g_lastCount = 0xFFFFFFFF;
 static bool     g_lastDetect = false;
-static uint32_t g_nextRadar = 0;
-static bool     g_redraw = true;
 
-static const int CX = 48;
-static const int CY = 73;
-static const int R  = 44;
-
-static const uint16_t C_BG     = 0x0841;
-static const uint16_t C_PANEL  = 0x10A2;
-static const uint16_t C_EDGE   = 0x2A69;
-static const uint16_t C_GREEN  = 0x5FE4;
-static const uint16_t C_TRAIL  = 0x1A45;
-static const uint16_t C_TEXT   = 0xEF7D;
-static const uint16_t C_DIM    = 0x7BEF;
-static const uint16_t C_AMBER  = 0xFD20;
+static const uint16_t C_GREEN = 0x5FE4;
+static const uint16_t C_AMBER = 0xFD20;
 
 static bool detected() {
   return g_dist > 0 && g_dist <= g_alertCm;
 }
 
-static void drawBeam(int angle, uint16_t color) {
-  float rad = (180.0f + angle) * PI / 180.0f;
-  int x = CX + (int)(cosf(rad) * R);
-  int y = CY + (int)(sinf(rad) * R);
-  tft.drawLine(CX, CY, x, y, color);
+static bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h,
+                       uint16_t *bitmap) {
+  if (y >= tft.height()) return 0;
+  tft.pushImage(x, y, w, h, bitmap);
+  return 1;
 }
 
-static void drawRadar() {
-  tft.fillRect(1, 20, 94, 106, C_BG);
+static void showJpg(const uint8_t *data, uint32_t len) {
+  TJpgDec.drawJpg(0, 0, data, len);
+}
 
-  for (int i = 1; i <= 3; i++) {
-    tft.drawCircle(CX, CY, R * i / 3, C_EDGE);
-  }
-  tft.drawFastHLine(CX - R, CY, 2 * R, C_EDGE);
-  tft.drawFastVLine(CX, CY - R, 2 * R, C_EDGE);
-
-  tft.setTextFont(1);
-  tft.setTextColor(C_DIM, C_BG);
-  tft.drawString("0", 2, 74);
-  tft.drawString("90", 44, 21);
-  tft.drawString("180", 86, 74);
-
-  for (int i = 3; i >= 1; i--) {
-    int a = g_angle - g_dir * i * 6;
-    if (a >= 0 && a <= 180) drawBeam(a, C_TRAIL);
-  }
-  drawBeam(g_angle, C_GREEN);
-
-  if (g_dist > 0) {
-    int rr = map(constrain(g_dist, 0, g_maxRange), 0, g_maxRange, 6, R - 4);
-    float rad = (180.0f + g_angle) * PI / 180.0f;
-    int x = CX + (int)(cosf(rad) * rr);
-    int y = CY + (int)(sinf(rad) * rr);
-    tft.fillCircle(x, y, 2, detected() ? C_AMBER : C_GREEN);
-  }
-
-  tft.fillCircle(CX, CY, 2, C_TEXT);
+static int frameForDistance() {
+  if (g_dist <= 0) return 0;
+  if (g_dist > g_alertCm) return 1;
+  if (g_dist > g_alertCm / 2) return 2;
+  return 3;
 }
 
 static void drawValues(bool force) {
-  bool det = detected();
+  if (force || g_dist != g_lastDist) {
+    char value[8];
+    snprintf(value, sizeof(value), "%.1f", g_dist / 100.0f);
 
-  if (force || g_dist != g_lastDist || det != g_lastDetect) {
-    tft.fillRect(98, 30, 60, 26, C_BG);
+    tft.fillRect(126, 23, 27, 16, TFT_WHITE);
+    tft.setTextDatum(MC_DATUM);
+    tft.setFreeFont(&FreeSansBold9pt7b);
+    tft.setTextColor(TFT_BLACK, TFT_WHITE);
+    tft.drawString(value, 140, 31);
     tft.setTextDatum(TL_DATUM);
-    tft.setTextFont(4);
-    tft.drawString(String(g_dist / 100.0f, 2), 99, 30);
-    tft.setTextFont(1);
-    tft.setTextColor(C_DIM, C_BG);
-    tft.drawString("m", 99, 56);
-
-    tft.fillRect(98, 66, 60, 10, C_BG);
-    tft.setTextFont(1);
-    tft.setTextColor(det ? C_AMBER : C_GREEN, C_BG);
-    tft.drawString(det ? "TERDETEKSI" : "AMAN", 99, 66);
 
     g_lastDist = g_dist;
-    g_lastDetect = det;
   }
 
   if (force || g_count != g_lastCount) {
-    tft.fillRect(98, 86, 60, 28, C_BG);
-    tft.setTextDatum(TR_DATUM);
-    if (g_count > 999) {
-      tft.setTextFont(2);
-      tft.drawString(String(g_count), 156, 94);
-    } else {
-      tft.setTextFont(4);
-      tft.drawString(String(g_count), 156, 86);
-    }
+    tft.fillRect(126, 83, 27, 16, TFT_WHITE);
+    tft.setTextDatum(MC_DATUM);
+    tft.setFreeFont(g_count > 999 ? &FreeSans9pt7b : &FreeSansBold9pt7b);
+    tft.setTextColor(TFT_BLACK, TFT_WHITE);
+    tft.drawString(String(g_count), 140, 91);
     tft.setTextDatum(TL_DATUM);
     g_lastCount = g_count;
   }
 }
 
-static void drawStatic() {
-  tft.fillScreen(C_BG);
-
-  tft.fillRect(0, 0, ST7735_WIDTH, 20, C_PANEL);
-  tft.drawFastHLine(0, 20, ST7735_WIDTH, C_EDGE);
-  tft.setTextDatum(TL_DATUM);
-  tft.setTextFont(2);
-  tft.setTextColor(C_TEXT, C_PANEL);
-  tft.drawString("DETEKTOR AIR", 4, 2);
-  tft.setTextFont(1);
-  tft.setTextColor(C_GREEN, C_PANEL);
-  tft.drawString("v2.0.3", 124, 6);
-
-  tft.drawFastVLine(96, 20, 106, C_EDGE);
-
-  tft.setTextFont(1);
-  tft.setTextColor(C_DIM, C_BG);
-  tft.drawString("JARAK", 99, 22);
-  tft.drawString("PASSES", 99, 78);
-  tft.drawString(String("MAX ") + String(g_maxRange / 100.0f, 2) + "m", 99, 114);
-
-  drawRadar();
+static void showFrame(int frame) {
+  g_frame = frame;
+  switch (frame) {
+    case 0: showJpg(ST7735_SCAN0_JPG, ST7735_SCAN0_JPG_LEN); break;
+    case 1: showJpg(ST7735_SCAN1_JPG, ST7735_SCAN1_JPG_LEN); break;
+    case 2: showJpg(ST7735_SCAN2_JPG, ST7735_SCAN2_JPG_LEN); break;
+    default: showJpg(ST7735_SCAN3_JPG, ST7735_SCAN3_JPG_LEN); break;
+  }
   drawValues(true);
 }
 
 inline void begin() {
   tft.init();
   tft.setRotation(ST7735_ROTATION);
-  tft.fillScreen(C_BG);
+  tft.fillScreen(TFT_BLACK);
 
-  tft.pushImage(0, 0, ST7735_WIDTH, ST7735_HEIGHT, ST7735_BOOT_LOGO);
-  delay(1500);
-  tft.fillScreen(C_BG);
+  TJpgDec.setJpgScale(1);
+  TJpgDec.setSwapBytes(true);
+  TJpgDec.setCallback(tft_output);
 
-  drawStatic();
+  // Welcome screen for 3 seconds.
+  showJpg(ST7735_WELCOME_JPG, ST7735_WELCOME_JPG_LEN);
+  delay(3000);
+
+  g_frame = -1;
+  g_pendingFrame = -1;
+  showFrame(frameForDistance());
+
   g_lastDist = g_dist;
   g_lastCount = g_count;
   g_lastDetect = detected();
@@ -194,16 +147,13 @@ inline void begin() {
 inline void setConfig(int maxRange, int alertCm) {
   g_maxRange = constrain(maxRange, 40, 400);
   g_alertCm = constrain(alertCm, 10, 150);
-  g_redraw = true;
+  g_pendingFrame = -1;
   g_lastDist = -1;
   g_lastCount = 0xFFFFFFFF;
 }
 
 inline void addReading(int distance, int angle) {
-  if (angle != g_angle) {
-    g_dir = (angle > g_angle) ? 1 : -1;
-    g_angle = constrain(angle, 0, 180);
-  }
+  (void)angle;
   g_dist = distance > 0 ? distance : 0;
 }
 
@@ -212,16 +162,17 @@ inline void setProximity(uint32_t count) {
 }
 
 inline void loop() {
-  uint32_t now = millis();
-
-  if (g_redraw) {
-    g_redraw = false;
-    drawStatic();
-  }
-
-  if ((int32_t)(now - g_nextRadar) >= 0) {
-    g_nextRadar = now + 200;
-    drawRadar();
+  int frame = frameForDistance();
+  if (frame != g_frame) {
+    if (frame != g_pendingFrame) {
+      g_pendingFrame = frame;
+      g_pendingSince = millis();
+    } else if ((uint32_t)(millis() - g_pendingSince) >= 400) {
+      showFrame(frame);
+      g_pendingFrame = -1;
+    }
+  } else {
+    g_pendingFrame = -1;
   }
 
   bool det = detected();
