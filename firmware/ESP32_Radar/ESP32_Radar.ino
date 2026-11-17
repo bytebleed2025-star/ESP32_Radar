@@ -65,7 +65,11 @@
 #include "nextion_ui.h"
 
 #define ST7735_ENABLED 1
-#include "st7735_ui.h"
+#if defined(ST7735_VECTOR_UI)
+#include "st7735_ui_vector.h"   // v2.0.1-style drawn radar screen
+#else
+#include "st7735_ui.h"          // JPEG artwork screen
+#endif
 
 #include "proximity.h"
 #include "buzzer.h"

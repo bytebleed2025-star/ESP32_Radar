@@ -26,6 +26,8 @@ vice versa.
 |---|---|
 | [`../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin) | blank / new board, flash at **0x0** |
 | [`../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-ota.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-ota.bin) | web OTA from v2.0.1/v2.0.3 |
+| [`../bin/v2.0.3/DetektorAir-v2.0.3-Vector-WiFi-BT-factory.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-Vector-WiFi-BT-factory.bin) | **same hybrid features, v2.0.1-style drawn screen**, flash at **0x0** |
+| [`../bin/v2.0.3/DetektorAir-v2.0.3-Vector-WiFi-BT-ota.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-Vector-WiFi-BT-ota.bin) | vector-screen build for **web OTA** |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk) | Android Bluetooth app |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3b.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3b.apk) | APK with secure → insecure → RFCOMM channel 1 fallback |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk) | Same fallback + scrollable device picker |
@@ -107,6 +109,22 @@ The previous distance-based background mapping is still available by setting:
 | `RadarScan_01` | object farther than the alert threshold |
 | `RadarScan_02` | object inside the alert threshold |
 | `RadarScan_03` | object very close (half the alert threshold) |
+
+### Display variants
+
+The same hybrid firmware is built with two displays:
+
+| Build | Display | PlatformIO env |
+|---|---|---|
+| `DetektorAir-v2.0.3-ST7735-...` | JPEG artwork (welcome + scan frames) | `esp32dev` (default) |
+| `DetektorAir-v2.0.3-Vector-...` | v2.0.1-style drawn radar, header `LACAK` | `esp32dev-vector` |
+
+Both have identical WiFi AP+STA, web UI/OTA and Bluetooth SPP. Build the
+vector variant with:
+
+```bash
+pio run -e esp32dev-vector
+```
 
 ## Boot fix (WiFi + Bluetooth)
 
