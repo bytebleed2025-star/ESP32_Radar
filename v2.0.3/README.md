@@ -93,6 +93,7 @@ uses Bluetooth.
   extra image assets.
 - The JPEGs are **baseline** 160×128. `TJpg_Decoder` cannot decode progressive
   JPEGs, so the artwork is re-encoded by `tools/build_st7735_images.py`.
+- The header in the scan frames reads **LACAK v2.0.3 SHD**.
 
 The previous distance-based background mapping is still available by setting:
 
@@ -124,7 +125,7 @@ radios start normally.
 ## Build result
 
 ```text
-Firmware: 1,907,605 bytes (97.0% of the OTA slot)
+Firmware: 1,907,429 bytes (97.0% of the OTA slot)
 RAM:         68,712 bytes (21.0%)
 APK:        329,567 bytes, version 2.0.3f
 ```
