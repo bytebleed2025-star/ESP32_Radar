@@ -23,10 +23,11 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,7 +53,7 @@ public class MainActivity extends Activity {
     private WebView webView;
     private ScrollView settingsPanel;
     private ProgressBar progress;
-    private ListView deviceList;
+    private Spinner deviceList;
     private TextView status;
 
     private BluetoothAdapter adapter;
@@ -93,9 +94,21 @@ public class MainActivity extends Activity {
         setupWebView();
 
         listAdapter = new ArrayAdapter<>(this, R.layout.item_device, deviceNames);
+        listAdapter.setDropDownViewResource(R.layout.item_device);
         deviceList.setAdapter(listAdapter);
-        deviceList.setOnItemClickListener((parent, view, position, id) ->
-                setStatus(deviceNames.get(position), R.color.dim));
+        deviceList.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view,
+                                       int position, long id) {
+                if (position >= 0 && position < deviceNames.size()) {
+                    setStatus(deviceNames.get(position), R.color.dim);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
 
         BluetoothManager manager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         adapter = manager != null ? manager.getAdapter() : null;
@@ -177,7 +190,6 @@ public class MainActivity extends Activity {
             }
         }
         if (select >= 0) {
-            deviceList.setItemChecked(select, true);
             deviceList.setSelection(select);
         }
 
@@ -199,8 +211,8 @@ public class MainActivity extends Activity {
     }
 
     private void connectSelected() {
-        int position = deviceList.getCheckedItemPosition();
-        if (position == ListView.INVALID_POSITION || position >= devices.size()) {
+        int position = deviceList.getSelectedItemPosition();
+        if (position < 0 || position >= devices.size()) {
             setStatus(getString(R.string.invalid_address), R.color.red);
             return;
         }

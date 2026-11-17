@@ -13,6 +13,7 @@ File: [`v2.0.3/`](v2.0.3/)
 | [`v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-ota.bin`](v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-ota.bin) | web OTA |
 | [`v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk) | Android Bluetooth app |
 | [`v2.0.3/DetektorAir-Bluetooth-v2.0.3b.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3b.apk) | APK with RFCOMM connect fallback |
+| [`v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk) | APK with RFCOMM fallback + scrollable device dropdown |
 
 ```cmd
 esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.0.3\DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin

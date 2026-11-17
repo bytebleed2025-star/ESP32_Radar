@@ -10,8 +10,8 @@ android {
         applicationId "id.lacak.detektorair"
         minSdk 24
         targetSdk 34
-        versionCode 5
-        versionName "2.0.3b"
+        versionCode 6
+        versionName "2.0.3c"
     }
 
     buildTypes {

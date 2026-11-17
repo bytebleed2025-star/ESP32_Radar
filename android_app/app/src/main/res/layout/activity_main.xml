@@ -160,19 +160,16 @@
                     android:textColor="@color/dim"
                     android:textSize="8sp" />
 
-                <ListView
+                <Spinner
                     android:id="@+id/device_list"
                     android:layout_width="match_parent"
-                    android:layout_height="150dp"
+                    android:layout_height="54dp"
                     android:layout_marginTop="7dp"
                     android:background="@drawable/bg_input"
-                    android:choiceMode="singleChoice"
-                    android:divider="#153826"
-                    android:dividerHeight="1dp"
-                    android:paddingStart="6dp"
-                    android:paddingTop="4dp"
-                    android:paddingEnd="6dp"
-                    android:paddingBottom="4dp" />
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:popupBackground="@color/bg"
+                    android:spinnerMode="dropdown" />
 
                 <Button
                     android:id="@+id/open"
