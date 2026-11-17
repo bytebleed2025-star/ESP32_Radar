@@ -301,7 +301,9 @@ static void connectSta() {
 static void startNetwork() {
   WiFi.persistent(false);            // settings are managed in our own NVS keys
   WiFi.mode(WIFI_AP_STA);            // AP and STA at the same time
-  WiFi.setSleep(false);
+  // Bluetooth Classic runs in this build. ESP-IDF aborts when WiFi modem
+  // sleep is disabled while the BT controller is enabled, so keep it on.
+  WiFi.setSleep(true);
   WiFi.setHostname(g_hostname.c_str());
   WiFi.softAPsetHostname(g_hostname.c_str());
   WiFi.setAutoReconnect(true);

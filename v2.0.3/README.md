@@ -105,6 +105,20 @@ The previous distance-based background mapping is still available by setting:
 | `RadarScan_02` | object inside the alert threshold |
 | `RadarScan_03` | object very close (half the alert threshold) |
 
+## Boot fix (WiFi + Bluetooth)
+
+Earlier hybrid builds called `WiFi.setSleep(false)` while Bluetooth Classic
+was already running. ESP-IDF aborts that combination:
+
+```text
+E wifi: Should enable WiFi modem sleep when both WiFi and Bluetooth are enabled
+abort() was called at PC ...
+```
+
+The crash happened before the ST7735 was initialized, which left the panel
+white. This build keeps WiFi modem sleep enabled, so the display and both
+radios start normally.
+
 ## Build result
 
 ```text
@@ -140,7 +154,10 @@ Commands: `C0`, `B1/B0`, `Y1/Y0`, `Zlo,lf,so,sf,hold`, `R<cm>`, `T<cm>`.
 ## Notes
 
 - WiFi + Bluetooth Classic coexistence is supported by the ESP32 radio, but
-  not independently. Test under your actual load.
+  **WiFi modem sleep must stay enabled** while Bluetooth is active. Calling
+  `WiFi.setSleep(false)` makes ESP-IDF abort at boot with
+  `Should enable WiFi modem sleep when both WiFi and Bluetooth are enabled`.
+  This build keeps modem sleep on.
 - The APK is debug-signed; allow “install unknown apps”.
 - OTA remains available in the web UI.
 - The Android APK (`2.0.3f`) works both ways: Bluetooth mode shows the local
