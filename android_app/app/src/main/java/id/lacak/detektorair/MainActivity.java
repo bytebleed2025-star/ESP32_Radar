@@ -134,8 +134,10 @@ public class MainActivity extends Activity {
 
     private void requestBtPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !hasBtPermission()) {
-            requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT},
-                    REQ_BT_CONNECT);
+            requestPermissions(new String[]{
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.BLUETOOTH_SCAN
+            }, REQ_BT_CONNECT);
         } else {
             loadDevices();
         }
@@ -231,7 +233,11 @@ public class MainActivity extends Activity {
 
         new Thread(() -> {
             try {
-                adapter.cancelDiscovery();
+                try {
+                    adapter.cancelDiscovery();
+                } catch (Exception ignored) {
+                    // Android 12+ may deny BLUETOOTH_SCAN; connecting still works.
+                }
                 BluetoothSocket s = openSocket(device);
 
                 synchronized (socketLock) {

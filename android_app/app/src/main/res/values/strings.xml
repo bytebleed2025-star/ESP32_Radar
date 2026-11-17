@@ -14,7 +14,7 @@
     <string name="help_title">CARA MENGHUBUNGKAN</string>
     <string name="help_steps">1. Nyalakan radar ESP32.\n2. Pair “DetektorAir” di pengaturan Bluetooth Android (PIN 1234).\n3. Kembali ke aplikasi, pilih DetektorAir.\n4. Tekan HUBUNGKAN.\n5. Setelah radar tampil, tekan Back untuk memutus koneksi.</string>
     <string name="back_hint">Saat radar tampil, tekan tombol Back untuk memutus Bluetooth.</string>
-    <string name="version">APK 2.0.3c · BLUETOOTH SPP</string>
+    <string name="version">APK 2.0.3d · BLUETOOTH SPP</string>
     <string name="invalid_address">Pilih perangkat Bluetooth terlebih dahulu.</string>
     <string name="connection_failed">Tidak dapat terhubung ke perangkat Bluetooth.</string>
     <string name="connection_hint">Pastikan DetektorAir sudah dipair dan Bluetooth aktif.</string>
