@@ -36,6 +36,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -219,8 +220,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             try {
                 adapter.cancelDiscovery();
-                BluetoothSocket s = device.createRfcommSocketToServiceRecord(SPP_UUID);
-                s.connect();
+                BluetoothSocket s = openSocket(device);
 
                 synchronized (socketLock) {
                     socket = s;
@@ -252,6 +252,26 @@ public class MainActivity extends Activity {
                 });
             }
         }).start();
+    }
+
+    @SuppressLint("MissingPermission")
+    private BluetoothSocket openSocket(BluetoothDevice device) throws Exception {
+        try {
+            BluetoothSocket s = device.createRfcommSocketToServiceRecord(SPP_UUID);
+            s.connect();
+            return s;
+        } catch (Exception secure) {
+            try {
+                BluetoothSocket s = device.createInsecureRfcommSocketToServiceRecord(SPP_UUID);
+                s.connect();
+                return s;
+            } catch (Exception insecure) {
+                Method m = device.getClass().getMethod("createRfcommSocket", int.class);
+                BluetoothSocket s = (BluetoothSocket) m.invoke(device, 1);
+                s.connect();
+                return s;
+            }
+        }
     }
 
     private void startReader() {
