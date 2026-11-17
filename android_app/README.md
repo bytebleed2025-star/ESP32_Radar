@@ -12,7 +12,7 @@ The APK works in two modes:
 1. Power the ESP32.
 2. Android: **Settings → Bluetooth → Pair new device → DetektorAir**.
 3. PIN: **1234**.
-4. Install and open `DetektorAir-Bluetooth-v2.0.3e.apk`.
+4. Install and open `DetektorAir-Bluetooth-v2.0.3f.apk`.
 5. Select `DetektorAir` and tap **HUBUNGKAN**.
 
 Press **Back** while the radar is shown to disconnect and return to the device
@@ -45,7 +45,7 @@ android_app/app/build/outputs/apk/debug/app-debug.apk
 The release copy is stored as:
 
 ```text
-bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3e.apk
+bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk
 ```
 
 ## How it works

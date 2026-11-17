@@ -93,11 +93,11 @@ static int frameForDistance() {
 static void drawValues(bool force) {
   if (force || g_dist != g_lastDist) {
     char value[8];
-    snprintf(value, sizeof(value), "%.1f", g_dist / 100.0f);
+    snprintf(value, sizeof(value), "%d", g_dist);
 
     tft.fillRect(126, 23, 27, 16, TFT_WHITE);
     tft.setTextDatum(MC_DATUM);
-    tft.setFreeFont(&FreeSansBold9pt7b);
+    tft.setFreeFont(g_dist >= 100 ? &FreeSans9pt7b : &FreeSansBold9pt7b);
     tft.setTextColor(TFT_BLACK, TFT_WHITE);
     tft.drawString(value, 140, 31);
     tft.setTextDatum(TL_DATUM);

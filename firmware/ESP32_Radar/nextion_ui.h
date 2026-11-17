@@ -274,7 +274,7 @@ static void updateInfoText() {
   cmd("tRssi.txt=\"" + (g_staip.length() ? (String(g_rssi) + " dBm") : String("-")) + "\"");
   cmd("tUp.txt=\"" + upString(g_up) + "\"");
   cmd("tFw.txt=\"" + g_fw + "\"");
-  cmd("tRange.txt=\"" + String(g_maxRange) + " cm\"");
+  cmd("tRange.txt=\"" + String(g_maxRange) + " m\"");
   cmd("tPauseBtn.txt=\"" + String(g_paused ? "LANJUT" : "JEDA") + "\"");
 }
 
@@ -287,7 +287,7 @@ static void updateControlText() {
   cmd("tAngle.txt=\"" + String(g_hand ? g_target : g_lastAngle) + "°\"");
   cmd("tStepVal.txt=\"" + String(g_step) + "°\"");
   cmd("tBuzz.txt=\"BUZZER: " + String(g_buzzer ? "ON" : "OFF") + "\"");
-  cmd("tThr.txt=\"AMBANG " + String(g_alertCm) + " cm\"");
+  cmd("tThr.txt=\"AMBANG " + String(g_alertCm) + " m\"");
   cmd("tPause2.txt=\"" + String(g_paused ? "LANJUT" : "JEDA") + "\"");
   cmd("tAuto.bco=" + String(g_hand ? NX_C_PILL : NX_C_ACTIVE));
   cmd("tHand.bco=" + String(g_hand ? NX_C_ACTIVE : NX_C_PILL));

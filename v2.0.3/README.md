@@ -31,6 +31,7 @@ vice versa.
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk) | Same fallback + scrollable device picker |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3d.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3d.apk) | Adds Android 12+ `BLUETOOTH_SCAN` permission fix |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3e.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3e.apk) | **Hybrid APK**: Bluetooth local UI **+** WiFi web UI (`192.168.4.1`) |
+| [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk) | **Latest hybrid APK**: distance unit `m` keeps the raw value |
 
 ```cmd
 esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.0.3\DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin
@@ -60,13 +61,13 @@ PIN : 1234
 ```
 
 1. Pair **DetektorAir** (PIN 1234) in Android Bluetooth settings.
-2. Install `DetektorAir-Bluetooth-v2.0.3e.apk`.
+2. Install `DetektorAir-Bluetooth-v2.0.3f.apk`.
 3. Select **DetektorAir** and tap **HUBUNGKAN**.
 4. Press **Back** in the radar to disconnect.
 
 ### Android APK over WiFi
 
-`2.0.3e` is a hybrid app: it can also open the ESP32 web UI directly.
+`2.0.3f` is a hybrid app: it can also open the ESP32 web UI directly.
 
 1. Connect the phone to the `DetektorAir` hotspot (`radar12345`).
 2. Tap **BUKA WEB UI (WIFI)**.
@@ -107,13 +108,18 @@ The previous distance-based background mapping is still available by setting:
 ## Build result
 
 ```text
-Firmware: 1,909,769 bytes (97.1%) flash
+Firmware: 1,916,384 bytes (~97.5% of the OTA slot)
 RAM:         68,712 bytes (21.0%)
-APK:        339,907 bytes, version 2.0.3e
+APK:        329,567 bytes, version 2.0.3f
 ```
 
-> Flash usage is **97.1%** of the 1.875 MB OTA slot. It fits, but there is only
-> about 56 KB headroom. Avoid adding large new assets to this build.
+> Flash usage is about **97.5%** of the 1.875 MB OTA slot. It fits, but there is
+> little headroom. Avoid adding large new assets to this build.
+
+## Distance unit
+
+All distance readouts use the unit **`m`** and show the raw sensor value as-is.
+The value is **not** divided by 100: a 33 cm reading is displayed as `33 m`.
 
 ## Protocol
 
@@ -137,5 +143,5 @@ Commands: `C0`, `B1/B0`, `Y1/Y0`, `Zlo,lf,so,sf,hold`, `R<cm>`, `T<cm>`.
   not independently. Test under your actual load.
 - The APK is debug-signed; allow “install unknown apps”.
 - OTA remains available in the web UI.
-- The Android APK (`2.0.3e`) works both ways: Bluetooth mode shows the local
+- The Android APK (`2.0.3f`) works both ways: Bluetooth mode shows the local
   UI, WiFi mode opens the ESP32 web UI with CONFIG/OTA.

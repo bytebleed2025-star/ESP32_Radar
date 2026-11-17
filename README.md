@@ -280,23 +280,26 @@ you do not use the display.
 
 ## Android APK
 
-The WebView wrapper is built from `android_app/`:
+The hybrid app is built from `android_app/`:
 
 ```bash
 cd android_app
-build_apk.bat
+gradlew.bat assembleDebug
 ```
 
-The ready APK is at the project root:
+Release APK:
 
 ```text
-DetektorAir-debug.apk
+bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk
 ```
 
-On the phone, join the ESP32 hotspot/WiFi, open the app, enter `192.168.4.1`
-(or the STA IP) and press **BUKA RADAR**. The wrapper supports the full web UI,
-WebSocket, WebAudio, file-picker OTA and Back-to-settings. See
-[`android_app/README.md`](android_app/README.md).
+It has two modes:
+
+- **Bluetooth** — pair `DetektorAir` (PIN `1234`), select it, press **HUBUNGKAN**.
+- **WiFi** — join the `DetektorAir` hotspot (`radar12345`) and press
+  **BUKA WEB UI (WIFI)** to open the full web UI, including CONFIG and OTA.
+
+See [`android_app/README.md`](android_app/README.md).
 
 ### Files to ship
 
@@ -304,7 +307,7 @@ All downloadable firmware is under [`bin/`](bin/README.md):
 
 ```text
 bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin   hybrid WiFi+BT factory (0x0)
-bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk                Android BT app
+bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk                hybrid Bluetooth + WiFi APK
 bin/v2.0.1/DetektorAir-v2.0.1-ST7735-factory.bin            previous WiFi factory
 bin/v2.0.1/DetektorAir-v2.0.1-ST7735-ota.bin                previous WiFi OTA
 bin/legacy/DetektorAir-ota.bin                              older Nextion / servo OTA
@@ -336,7 +339,7 @@ bin/legacy/DetektorAir-ST7735-factory.bin                    older ST7735 servo 
 
 > For the **v2.0.3 hybrid** build, download
 > [`bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin`](bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin)
-> and install [`bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk`](bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk).
+> and install [`bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk`](bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk).
 
 ```cmd
 esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.0.3\DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin
