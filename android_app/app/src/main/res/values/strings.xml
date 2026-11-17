@@ -2,19 +2,21 @@
 <resources>
     <string name="app_name">LACAK Detektor Air</string>
     <string name="subtitle">SOLUSI PINTAR · RADAR SONAR</string>
-    <string name="eyebrow">BLUETOOTH RADAR · ESP32 · APK</string>
-    <string name="intro">Panel radar ultrasonik ESP32 melalui Bluetooth. Tanpa WiFi, tanpa hotspot.</string>
-    <string name="connection_title">KONEKSI BLUETOOTH</string>
-    <string name="connection_sub">Pair perangkat DetektorAir di pengaturan Bluetooth, lalu pilih dari daftar.</string>
+    <string name="eyebrow">BLUETOOTH + WIFI RADAR · ESP32 · APK</string>
+    <string name="intro">Panel radar ultrasonik ESP32 melalui Bluetooth atau WiFi. Pilih salah satu koneksi.</string>
+    <string name="connection_title">KONEKSI BLUETOOTH / WIFI</string>
+    <string name="connection_sub">Bluetooth: pair DetektorAir (PIN 1234). WiFi: sambungkan HP ke hotspot DetektorAir, lalu buka web UI.</string>
     <string name="address_label">PERANGKAT BLUETOOTH TERPAIR</string>
     <string name="ip_hint">DetektorAir</string>
     <string name="open_radar">HUBUNGKAN</string>
+    <string name="open_wifi_web">BUKA WEB UI (WIFI)</string>
     <string name="wifi_settings">PENGATURAN BLUETOOTH</string>
-    <string name="status_idle">Pilih perangkat lalu tekan HUBUNGKAN.</string>
+    <string name="wifi_settings_ap">PENGATURAN WIFI</string>
+    <string name="status_idle">Pilih perangkat Bluetooth, atau sambungkan WiFi lalu buka web UI.</string>
     <string name="help_title">CARA MENGHUBUNGKAN</string>
-    <string name="help_steps">1. Nyalakan radar ESP32.\n2. Pair “DetektorAir” di pengaturan Bluetooth Android (PIN 1234).\n3. Kembali ke aplikasi, pilih DetektorAir.\n4. Tekan HUBUNGKAN.\n5. Setelah radar tampil, tekan Back untuk memutus koneksi.</string>
-    <string name="back_hint">Saat radar tampil, tekan tombol Back untuk memutus Bluetooth.</string>
-    <string name="version">APK 2.0.3d · BLUETOOTH SPP</string>
+    <string name="help_steps">Bluetooth:\n1. Pair “DetektorAir” (PIN 1234).\n2. Pilih DetektorAir, tekan HUBUNGKAN.\n\nWiFi:\n1. Sambungkan HP ke hotspot “DetektorAir” (password radar12345).\n2. Tekan BUKA WEB UI (WIFI).\n3. Web UI lengkap dengan CONFIG dan OTA.\n\nSaat radar tampil, tekan Back untuk memutus koneksi.</string>
+    <string name="back_hint">Saat radar tampil, tekan tombol Back untuk memutus koneksi.</string>
+    <string name="version">APK 2.0.3e · HYBRID BT + WIFI</string>
     <string name="invalid_address">Pilih perangkat Bluetooth terlebih dahulu.</string>
     <string name="connection_failed">Tidak dapat terhubung ke perangkat Bluetooth.</string>
     <string name="connection_hint">Pastikan DetektorAir sudah dipair dan Bluetooth aktif.</string>
@@ -30,4 +32,5 @@
     <string name="bt_failed">Gagal terhubung: %1$s</string>
     <string name="bt_connected">Terhubung ke %1$s</string>
     <string name="bt_disconnected">Bluetooth terputus.</string>
+    <string name="wifi_web_failed">Tidak bisa membuka web UI. Sambungkan HP ke hotspot DetektorAir (radar12345).</string>
 </resources>

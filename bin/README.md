@@ -15,13 +15,15 @@ File: [`v2.0.3/`](v2.0.3/)
 | [`v2.0.3/DetektorAir-Bluetooth-v2.0.3b.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3b.apk) | APK with RFCOMM connect fallback |
 | [`v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk) | APK with RFCOMM fallback + scrollable device dropdown |
 | [`v2.0.3/DetektorAir-Bluetooth-v2.0.3d.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3d.apk) | Adds Android 12+ BLUETOOTH_SCAN fix |
+| [`v2.0.3/DetektorAir-Bluetooth-v2.0.3e.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3e.apk) | **Recommended hybrid APK**: Bluetooth + WiFi web UI |
 
 ```cmd
 esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.0.3\DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin
 ```
 
 Hybrid: WiFi AP `DetektorAir` / `radar12345`, web UI at `http://192.168.4.1`,
-web OTA, **and** Bluetooth SPP `DetektorAir` / PIN `1234`.
+web OTA, **and** Bluetooth SPP `DetektorAir` / PIN `1234`. APK `2.0.3e` can
+open either the Bluetooth UI or the WiFi web UI.
 
 Checksums: [`v2.0.3/SHA256SUMS.txt`](v2.0.3/SHA256SUMS.txt).
 

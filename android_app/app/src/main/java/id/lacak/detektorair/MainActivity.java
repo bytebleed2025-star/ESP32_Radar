@@ -20,6 +20,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -67,6 +69,7 @@ public class MainActivity extends Activity {
     private Thread readerThread;
     private final Object socketLock = new Object();
     private boolean connecting = false;
+    private boolean wifiMode = false;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -114,7 +117,9 @@ public class MainActivity extends Activity {
         adapter = manager != null ? manager.getAdapter() : null;
 
         findViewById(R.id.open).setOnClickListener(v -> connectSelected());
+        findViewById(R.id.wifi_web).setOnClickListener(v -> openWifiWeb());
         findViewById(R.id.wifi).setOnClickListener(v -> openBluetoothSettings());
+        findViewById(R.id.wifi_ap).setOnClickListener(v -> openWifiSettings());
 
         requestBtPermission();
         hideSystemBars();
@@ -251,6 +256,7 @@ public class MainActivity extends Activity {
                     progress.setVisibility(View.GONE);
                     findViewById(R.id.open).setEnabled(true);
                     setStatus(getString(R.string.bt_connected, name), R.color.green);
+                    wifiMode = false;
                     settingsPanel.setVisibility(View.GONE);
                     webView.setVisibility(View.VISIBLE);
                     webView.loadUrl("file:///android_asset/index.html");
@@ -321,6 +327,7 @@ public class MainActivity extends Activity {
     }
 
     private void disconnect() {
+        wifiMode = false;
         closeSocket();
         if (webView != null) {
             webView.loadUrl("about:blank");
@@ -333,7 +340,7 @@ public class MainActivity extends Activity {
     }
 
     private void onBluetoothDisconnected() {
-        if (settingsPanel.getVisibility() == View.GONE) {
+        if (!wifiMode && settingsPanel.getVisibility() == View.GONE) {
             disconnect();
         }
     }
@@ -357,6 +364,33 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void openWifiSettings() {
+        try {
+            startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
+        } catch (Exception e) {
+            Toast.makeText(this, getString(R.string.wifi_settings_ap), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void openWifiWeb() {
+        wifiMode = true;
+        settingsPanel.setVisibility(View.GONE);
+        webView.setVisibility(View.VISIBLE);
+        webView.loadUrl("http://192.168.4.1");
+        hideSystemBars();
+    }
+
+    private void closeWifiWeb() {
+        wifiMode = false;
+        if (webView != null) {
+            webView.loadUrl("about:blank");
+            webView.setVisibility(View.GONE);
+        }
+        settingsPanel.setVisibility(View.VISIBLE);
+        setStatus(getString(R.string.status_idle), R.color.dim);
+        hideSystemBars();
+    }
+
     /* ------------------------------------------------------------------ */
     /*  WebView + Bluetooth bridge                                        */
     /* ------------------------------------------------------------------ */
@@ -378,9 +412,15 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public void onReceivedError(WebView view, int errorCode,
-                                        String description, String failingUrl) {
-                setStatus(description, R.color.red);
+            public void onReceivedError(WebView view, WebResourceRequest request,
+                                        WebResourceError error) {
+                if (!request.isForMainFrame()) return;
+                if (wifiMode) {
+                    closeWifiWeb();
+                    setStatus(getString(R.string.wifi_web_failed), R.color.red);
+                } else {
+                    setStatus(error.getDescription().toString(), R.color.red);
+                }
             }
         });
 
@@ -424,7 +464,11 @@ public class MainActivity extends Activity {
     @Override
     public void onBackPressed() {
         if (webView != null && webView.getVisibility() == View.VISIBLE) {
-            disconnect();
+            if (wifiMode) {
+                closeWifiWeb();
+            } else {
+                disconnect();
+            }
             return;
         }
         super.onBackPressed();

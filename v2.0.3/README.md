@@ -30,6 +30,7 @@ vice versa.
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3b.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3b.apk) | APK with secure → insecure → RFCOMM channel 1 fallback |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk) | Same fallback + scrollable device picker |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3d.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3d.apk) | Adds Android 12+ `BLUETOOTH_SCAN` permission fix |
+| [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3e.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3e.apk) | **Hybrid APK**: Bluetooth local UI **+** WiFi web UI (`192.168.4.1`) |
 
 ```cmd
 esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.0.3\DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin
@@ -59,9 +60,21 @@ PIN : 1234
 ```
 
 1. Pair **DetektorAir** (PIN 1234) in Android Bluetooth settings.
-2. Install `DetektorAir-Bluetooth-v2.0.3.apk`.
+2. Install `DetektorAir-Bluetooth-v2.0.3e.apk`.
 3. Select **DetektorAir** and tap **HUBUNGKAN**.
 4. Press **Back** in the radar to disconnect.
+
+### Android APK over WiFi
+
+`2.0.3e` is a hybrid app: it can also open the ESP32 web UI directly.
+
+1. Connect the phone to the `DetektorAir` hotspot (`radar12345`).
+2. Tap **BUKA WEB UI (WIFI)**.
+3. The full web UI opens, including **CONFIG** and **OTA**.
+4. Press **Back** to return to the app.
+
+Bluetooth mode loads the local UI from the APK; WiFi mode loads the real
+remote UI from the ESP32, so CONFIG/OTA are available there.
 
 Both can be used at the same time: the web UI can stay open while the phone
 uses Bluetooth.
@@ -96,7 +109,7 @@ The previous distance-based background mapping is still available by setting:
 ```text
 Firmware: 1,909,769 bytes (97.1%) flash
 RAM:         68,712 bytes (21.0%)
-APK:        327,707 bytes, version 2.0.3
+APK:        339,907 bytes, version 2.0.3e
 ```
 
 > Flash usage is **97.1%** of the 1.875 MB OTA slot. It fits, but there is only
@@ -124,5 +137,5 @@ Commands: `C0`, `B1/B0`, `Y1/Y0`, `Zlo,lf,so,sf,hold`, `R<cm>`, `T<cm>`.
   not independently. Test under your actual load.
 - The APK is debug-signed; allow “install unknown apps”.
 - OTA remains available in the web UI.
-- The Android APK hides the WiFi/CONFIG tab in its local WebView; use a browser
-  for WiFi/OTA configuration.
+- The Android APK (`2.0.3e`) works both ways: Bluetooth mode shows the local
+  UI, WiFi mode opens the ESP32 web UI with CONFIG/OTA.

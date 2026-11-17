@@ -180,12 +180,28 @@
                     android:text="@string/open_radar" />
 
                 <Button
+                    android:id="@+id/wifi_web"
+                    style="@style/GhostButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/open_wifi_web" />
+
+                <Button
                     android:id="@+id/wifi"
                     style="@style/GhostButton"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginTop="8dp"
                     android:text="@string/wifi_settings" />
+
+                <Button
+                    android:id="@+id/wifi_ap"
+                    style="@style/GhostButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/wifi_settings_ap" />
 
                 <TextView
                     android:id="@+id/status"
