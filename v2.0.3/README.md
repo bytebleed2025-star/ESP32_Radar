@@ -16,9 +16,9 @@ vice versa.
 
 ## Renders
 
-| Welcome (3 s) | Scan artwork + live values |
-|---|---|
-| ![](st7735-welcome.jpg) | ![](st7735-scan-overlay.png) |
+| Welcome (3 s) | Scan artwork + live values | Animation sequence |
+|---|---|---|
+| ![](st7735-welcome.jpg) | ![](st7735-scan-overlay.png) | ![](st7735-animation.png) |
 
 ## Download
 
@@ -66,22 +66,32 @@ uses Bluetooth.
 ## Display artwork
 
 - **WelcomeScreen.jpg** is shown for **3 seconds** after the display initializes.
-- Then the scan background is selected from **RadarScan_00..03**:
+- Then **RadarScan_00 → 01 → 02 → 03 → 00** loops continuously:
+  - **1 frame per second**
+  - **1 MHz SPI**
+  - 4-frame cycle takes about 4 seconds
+- The distance and pass count are drawn in **FreeSansBold (modern sans)**
+  inside the white boxes of the artwork.
+- The animation uses the same four JPEGs already stored in flash; there are no
+  extra image assets.
 
-| Frame | Condition |
+The previous distance-based background mapping is still available by setting:
+
+```cpp
+#define SCAN_ANIMATE 0
+```
+
+| Frame | Distance-based condition |
 |---|---|
 | `RadarScan_00` | no echo / idle |
-| `RadarScan_01` | object farther than the water-alert threshold |
+| `RadarScan_01` | object farther than the alert threshold |
 | `RadarScan_02` | object inside the alert threshold |
 | `RadarScan_03` | object very close (half the alert threshold) |
-
-The distance and pass count are drawn in **FreeSansBold (modern sans)** inside
-the white boxes of the artwork.
 
 ## Build result
 
 ```text
-Firmware: 1,909,853 bytes (97.1%) flash
+Firmware: 1,909,769 bytes (97.1%) flash
 RAM:         68,712 bytes (21.0%)
 APK:        327,707 bytes, version 2.0.3
 ```

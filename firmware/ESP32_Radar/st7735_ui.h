@@ -44,6 +44,10 @@
 #define ST7735_HEIGHT 128
 #define ST7735_ROTATION 1
 
+// Continuous scan animation: 1 frame per second at 1 MHz.
+#define SCAN_ANIMATE   1
+#define SCAN_FRAME_MS  1000
+
 namespace St7735UI {
 
 static TFT_eSPI tft;
@@ -55,6 +59,7 @@ static uint32_t g_count = 0;
 static int      g_frame = -1;
 static int      g_pendingFrame = -1;
 static uint32_t g_pendingSince = 0;
+static uint32_t g_nextFrameMs = 0;
 
 static int      g_lastDist = -1;
 static uint32_t g_lastCount = 0xFFFFFFFF;
@@ -137,7 +142,12 @@ inline void begin() {
 
   g_frame = -1;
   g_pendingFrame = -1;
+#if SCAN_ANIMATE
+  showFrame(0);
+  g_nextFrameMs = millis() + SCAN_FRAME_MS;
+#else
   showFrame(frameForDistance());
+#endif
 
   g_lastDist = g_dist;
   g_lastCount = g_count;
@@ -162,6 +172,13 @@ inline void setProximity(uint32_t count) {
 }
 
 inline void loop() {
+#if SCAN_ANIMATE
+  uint32_t now = millis();
+  if ((int32_t)(now - g_nextFrameMs) >= 0) {
+    g_nextFrameMs = now + SCAN_FRAME_MS;
+    showFrame((g_frame + 1) & 3);
+  }
+#else
   int frame = frameForDistance();
   if (frame != g_frame) {
     if (frame != g_pendingFrame) {
@@ -174,6 +191,7 @@ inline void loop() {
   } else {
     g_pendingFrame = -1;
   }
+#endif
 
   bool det = detected();
   if (g_dist != g_lastDist || g_count != g_lastCount || det != g_lastDetect) {
