@@ -91,6 +91,8 @@ uses Bluetooth.
   inside the white boxes of the artwork.
 - The animation uses the same four JPEGs already stored in flash; there are no
   extra image assets.
+- The JPEGs are **baseline** 160×128. `TJpg_Decoder` cannot decode progressive
+  JPEGs, so the artwork is re-encoded by `tools/build_st7735_images.py`.
 
 The previous distance-based background mapping is still available by setting:
 
@@ -122,12 +124,12 @@ radios start normally.
 ## Build result
 
 ```text
-Firmware: 1,916,384 bytes (~97.5% of the OTA slot)
+Firmware: 1,907,605 bytes (97.0% of the OTA slot)
 RAM:         68,712 bytes (21.0%)
 APK:        329,567 bytes, version 2.0.3f
 ```
 
-> Flash usage is about **97.5%** of the 1.875 MB OTA slot. It fits, but there is
+> Flash usage is about **97.0%** of the 1.875 MB OTA slot. It fits, but there is
 > little headroom. Avoid adding large new assets to this build.
 
 ## Distance unit
