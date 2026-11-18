@@ -116,7 +116,10 @@ static void drawValues(bool force) {
   }
 }
 
+static uint32_t g_frames = 0;
+
 static void showFrame(int frame) {
+  g_frames++;
   g_frame = frame;
   switch (frame) {
     case 0: showJpg(ST7735_SCAN0_JPG, ST7735_SCAN0_JPG_LEN); break;
@@ -131,7 +134,6 @@ inline void begin() {
   tft.init();
   tft.setRotation(ST7735_ROTATION);
   tft.fillScreen(TFT_BLACK);
-
   TJpgDec.setJpgScale(1);
   TJpgDec.setSwapBytes(true);
   TJpgDec.setCallback(tft_output);
@@ -169,6 +171,10 @@ inline void addReading(int distance, int angle) {
 
 inline void setProximity(uint32_t count) {
   g_count = count;
+}
+
+inline uint32_t frames() {
+  return g_frames;
 }
 
 inline void loop() {

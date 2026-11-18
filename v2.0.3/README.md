@@ -88,19 +88,8 @@ uses Bluetooth.
 The ST7735 is drawn in code and mirrors the live web UI — same sweep angle,
 distance, alert state and pass count.
 
-```text
-LACAK                    v2.0.3
-┌──────────────┬─────────┐
-│  radar rings │ JARAK   │
-│  sweep+blips │ 58      │
-│              │ m       │
-│              │ AMAN    │
-│              │ PASSES  │
-│              │      0  │
-│              │ MAX 200m│
-└──────────────┴─────────┘
-```
-
+- The **welcome logo** is shown for **3 seconds** at boot, then the mirror screen
+  starts.
 - Header **LACAK**; version on the right.
 - `JARAK` uses the raw sensor value with the unit **`m`** (`58`, not `0.58`).
 - `AMAN` / `TERDETEKSI` follows the alert threshold.
@@ -162,11 +151,26 @@ never updated even though the WebSocket was connected.
 - The APK's WebView no longer falls into demo mode (`file://`) — the injected
   Bluetooth shim sets `window.__LACAK_LIVE = true`.
 
+## Diagnostics
+
+The firmware prints a heartbeat every 5 seconds at **115200**:
+
+```text
+[DIAG] up=125s ang=93 dist=41 ws=1 bt=0 heap=155000 min=140000 tft=620
+```
+
+- `ang` keeps changing → the sweep is running.
+- `tft` is the number of TFT radar frames drawn.
+- `ws` / `bt` show connected web and Bluetooth clients.
+- `heap` / `min` show free and minimum-free heap.
+- `Reset reason:` is printed once at boot, so an unexpected restart is visible
+  in the log.
+
 ## Build result
 
 ```text
-Firmware: 1,864,625 bytes (94.8% of the OTA slot)
-RAM:         65,104 bytes (19.9%)
+Firmware: 1,889,805 bytes (96.1% of the OTA slot)
+RAM:         68,720 bytes (21.0%)
 APK:        329,691 bytes, version 2.0.3g
 ```
 

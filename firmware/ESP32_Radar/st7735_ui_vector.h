@@ -36,7 +36,10 @@
 #endif
 
 #include <TFT_eSPI.h>
+#include <TJpg_Decoder.h>
 #include <math.h>
+
+#include "st7735_images.h"
 
 #define ST7735_WIDTH  160
 #define ST7735_HEIGHT 128
@@ -76,6 +79,19 @@ static bool detected() {
   return g_dist > 0 && g_dist <= g_alertCm;
 }
 
+static uint32_t g_frames = 0;
+
+static bool tft_output(int16_t x, int16_t y, uint16_t w, uint16_t h,
+                       uint16_t *bitmap) {
+  if (y >= tft.height()) return 0;
+  tft.pushImage(x, y, w, h, bitmap);
+  return 1;
+}
+
+static void showJpg(const uint8_t *data, uint32_t len) {
+  TJpgDec.drawJpg(0, 0, data, len);
+}
+
 static void drawBeam(int angle, uint16_t color) {
   float rad = (180.0f + angle) * PI / 180.0f;
   int x = CX + (int)(cosf(rad) * R);
@@ -84,6 +100,7 @@ static void drawBeam(int angle, uint16_t color) {
 }
 
 static void drawRadar() {
+  g_frames++;
   tft.fillRect(1, 20, 94, 106, C_BG);
 
   for (int i = 1; i <= 3; i++) {
@@ -181,10 +198,22 @@ inline void begin() {
   tft.setRotation(ST7735_ROTATION);
   tft.fillScreen(C_BG);
 
+  // Welcome logo for 3 seconds, then the live mirror screen.
+  TJpgDec.setJpgScale(1);
+  TJpgDec.setSwapBytes(true);
+  TJpgDec.setCallback(tft_output);
+  showJpg(ST7735_WELCOME_JPG, ST7735_WELCOME_JPG_LEN);
+  delay(3000);
+  tft.fillScreen(C_BG);
+
   drawStatic();
   g_lastDist = g_dist;
   g_lastCount = g_count;
   g_lastDetect = detected();
+}
+
+inline uint32_t frames() {
+  return g_frames;
 }
 
 inline void setConfig(int maxRange, int alertCm) {

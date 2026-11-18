@@ -1009,6 +1009,7 @@ void setup() {
   Serial.println(" DETEKTOR AIR LACAK - ESP32 Radar Sonar");
   Serial.println(" Version " FW_VERSION);
   Serial.println("==========================================");
+  Serial.printf("Reset reason: %d\n", (int)esp_reset_reason());
 
   if (!SerialBT.begin(BT_NAME)) {
     Serial.println("Bluetooth init failed");
@@ -1160,4 +1161,20 @@ void loop() {
     g_lastStatusMs = now;
     sendStatus();
   }
+
+  // Diagnostics: 5 s heartbeat so a freeze can be pinpointed from Serial.
+  static uint32_t g_diagAt = 0;
+  if ((uint32_t)(now - g_diagAt) >= 5000UL) {
+    g_diagAt = now;
+    Serial.printf("[DIAG] up=%lus ang=%d dist=%d ws=%u bt=%d heap=%lu min=%lu tft=%lu\n",
+                  (unsigned long)(now / 1000UL), g_angle, g_lastMeasurement,
+                  (unsigned)webSocket.connectedClients(),
+                  SerialBT.hasClient() ? 1 : 0,
+                  (unsigned long)ESP.getFreeHeap(),
+                  (unsigned long)ESP.getMinFreeHeap(),
+                  (unsigned long)St7735UI::frames());
+  }
+
+  // Give the idle task a slot; the TFT redraw is long at 1 MHz SPI.
+  delay(1);
 }
