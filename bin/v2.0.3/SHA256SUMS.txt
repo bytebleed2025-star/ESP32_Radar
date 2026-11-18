@@ -1,7 +1,7 @@
-118375856ca0b7cd7e774a01a12b2ffbe55b3b76955aeb1aebd5c61bb7b6449e  DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin
-adfc6a2e21ef2166b108f4ccca33b9552df9f7d07fa813d7761e0ef55eb95f6d  DetektorAir-v2.0.3-ST7735-WiFi-BT-ota.bin
-29f27720b1a67479677798a4b1b3b7a42b565d9888e0695eb276a430c91f5261  DetektorAir-v2.0.3-Vector-WiFi-BT-factory.bin
-dbcfbe90776e8ec1e3d2a262bccf79761b87c6384488f5b463ed21cb0fc4ccc3  DetektorAir-v2.0.3-Vector-WiFi-BT-ota.bin
+04200f7fd743d0684a89e61e486adf3165ca2769daf390c625d55b4d49c43df2  DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin
+954451a9784fab6c7522503596b7bc130e017cf32f4ad759b82da347a207e52c  DetektorAir-v2.0.3-ST7735-WiFi-BT-ota.bin
+abea8d3af15bc226ddbb619dfe84d9895b66e1ffd9729012a2c6e8fe5b861d48  DetektorAir-v2.0.3-Artwork-WiFi-BT-factory.bin
+b2d80a40e170b06c36e2640032a6bacbd20742a17e754767928a393e4b0eb043  DetektorAir-v2.0.3-Artwork-WiFi-BT-ota.bin
 3def35b2444741d75e0f645bcd7cd5e8bae79b7cf6dfc17115f100473568404e  DetektorAir-Bluetooth-v2.0.3.apk
 77e660f73a9b847f15228922360c2e13b0bf9d15ad03883e9249c3cffffe3399  DetektorAir-Bluetooth-v2.0.3b.apk
 c92fe7362296b96482c8223f0b0932ae31adb230eb8a37f2d0056f589b078346  DetektorAir-Bluetooth-v2.0.3c.apk

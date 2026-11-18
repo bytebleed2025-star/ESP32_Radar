@@ -24,10 +24,10 @@ vice versa.
 
 | File | Use |
 |---|---|
-| [`../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin) | blank / new board, flash at **0x0** |
-| [`../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-ota.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-ota.bin) | web OTA from v2.0.1/v2.0.3 |
-| [`../bin/v2.0.3/DetektorAir-v2.0.3-Vector-WiFi-BT-factory.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-Vector-WiFi-BT-factory.bin) | **same hybrid features, v2.0.1-style drawn screen**, flash at **0x0** |
-| [`../bin/v2.0.3/DetektorAir-v2.0.3-Vector-WiFi-BT-ota.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-Vector-WiFi-BT-ota.bin) | vector-screen build for **web OTA** |
+| [`../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin) | **default hybrid**, v2.0.1-style mirror display, flash at **0x0** |
+| [`../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-ota.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-ST7735-WiFi-BT-ota.bin) | default build for web OTA |
+| [`../bin/v2.0.3/DetektorAir-v2.0.3-Artwork-WiFi-BT-factory.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-Artwork-WiFi-BT-factory.bin) | alternate JPEG-artwork display, flash at **0x0** |
+| [`../bin/v2.0.3/DetektorAir-v2.0.3-Artwork-WiFi-BT-ota.bin`](../bin/v2.0.3/DetektorAir-v2.0.3-Artwork-WiFi-BT-ota.bin) | artwork build for **web OTA** |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3.apk) | Android Bluetooth app |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3b.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3b.apk) | APK with secure → insecure → RFCOMM channel 1 fallback |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk) | Same fallback + scrollable device picker |
@@ -83,7 +83,34 @@ remote UI from the ESP32, so CONFIG/OTA are available there.
 Both can be used at the same time: the web UI can stay open while the phone
 uses Bluetooth.
 
-## Display artwork
+## Display (default): v2.0.1 mirror of the web UI
+
+The ST7735 is drawn in code and mirrors the live web UI — same sweep angle,
+distance, alert state and pass count.
+
+```text
+LACAK                    v2.0.3
+┌──────────────┬─────────┐
+│  radar rings │ JARAK   │
+│  sweep+blips │ 58      │
+│              │ m       │
+│              │ AMAN    │
+│              │ PASSES  │
+│              │      0  │
+│              │ MAX 200m│
+└──────────────┴─────────┘
+```
+
+- Header **LACAK**; version on the right.
+- `JARAK` uses the raw sensor value with the unit **`m`** (`58`, not `0.58`).
+- `AMAN` / `TERDETEKSI` follows the alert threshold.
+- `PASSES` is the inductive counter.
+- `MAX` is the configured range, also raw + `m`.
+- The sweep updates every 200 ms and uses the same virtual angle as the web UI.
+
+## Alternate display: JPEG artwork
+
+The artwork build is kept as an option:
 
 - **WelcomeScreen.jpg** is shown for **3 seconds** after the display initializes.
 - Then **RadarScan_00 → 01 → 02 → 03 → 00** loops continuously:
@@ -92,39 +119,22 @@ uses Bluetooth.
   - 4-frame cycle takes about 4 seconds
 - The distance and pass count are drawn in **FreeSansBold (modern sans)**
   inside the white boxes of the artwork.
-- The animation uses the same four JPEGs already stored in flash; there are no
-  extra image assets.
 - The JPEGs are **baseline** 160×128. `TJpg_Decoder` cannot decode progressive
   JPEGs, so the artwork is re-encoded by `tools/build_st7735_images.py`.
 - The header in the scan frames reads **LACAK v2.0.3 SHD**.
 
-The previous distance-based background mapping is still available by setting:
-
-```cpp
-#define SCAN_ANIMATE 0
-```
-
-| Frame | Distance-based condition |
-|---|---|
-| `RadarScan_00` | no echo / idle |
-| `RadarScan_01` | object farther than the alert threshold |
-| `RadarScan_02` | object inside the alert threshold |
-| `RadarScan_03` | object very close (half the alert threshold) |
-
 ### Display variants
-
-The same hybrid firmware is built with two displays:
 
 | Build | Display | PlatformIO env |
 |---|---|---|
-| `DetektorAir-v2.0.3-ST7735-...` | JPEG artwork (welcome + scan frames) | `esp32dev` (default) |
-| `DetektorAir-v2.0.3-Vector-...` | v2.0.1-style drawn radar, header `LACAK` | `esp32dev-vector` |
+| `DetektorAir-v2.0.3-ST7735-...` | v2.0.1-style mirror (default) | `esp32dev` |
+| `DetektorAir-v2.0.3-Artwork-...` | JPEG artwork (welcome + scan frames) | `esp32dev-art` |
 
 Both have identical WiFi AP+STA, web UI/OTA and Bluetooth SPP. Build the
-vector variant with:
+artwork variant with:
 
 ```bash
-pio run -e esp32dev-vector
+pio run -e esp32dev-art
 ```
 
 ## Boot fix (WiFi + Bluetooth)
@@ -155,8 +165,8 @@ never updated even though the WebSocket was connected.
 ## Build result
 
 ```text
-Firmware: 1,907,733 bytes (97.0% of the OTA slot)
-RAM:         68,712 bytes (21.0%)
+Firmware: 1,864,625 bytes (94.8% of the OTA slot)
+RAM:         65,104 bytes (19.9%)
 APK:        329,691 bytes, version 2.0.3g
 ```
 

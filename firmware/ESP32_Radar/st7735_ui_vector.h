@@ -4,7 +4,9 @@
  * v2.0.1-style ST7735 160x128 landscape UI for the v2.0.3 hybrid firmware.
  *
  * Animated radar + data column, drawn in code (no JPEG artwork).
- * Selected with -DST7735_VECTOR_UI=1 (PlatformIO env: esp32dev-vector).
+ * Default v2.0.3 hybrid screen: it mirrors the web UI live.
+ * The JPEG artwork build is selected with -DST7735_ARTWORK_UI=1
+ * (PlatformIO env: esp32dev-art).
  *
  * Header: LACAK. Distance uses the unit "m" with the raw sensor value
  * (no cm -> m division).
