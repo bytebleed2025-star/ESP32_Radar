@@ -11,6 +11,7 @@ WEB = ROOT / "web"
 ASSETS = ROOT / "android_app" / "app" / "src" / "main" / "assets"
 
 SHIM = """<script>
+window.__LACAK_LIVE = true;
 (function(){
   if (!window.AndroidBT) return;
 

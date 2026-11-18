@@ -33,7 +33,8 @@ vice versa.
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk) | Same fallback + scrollable device picker |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3d.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3d.apk) | Adds Android 12+ `BLUETOOTH_SCAN` permission fix |
 | [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3e.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3e.apk) | **Hybrid APK**: Bluetooth local UI **+** WiFi web UI (`192.168.4.1`) |
-| [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk) | **Latest hybrid APK**: distance unit `m` keeps the raw value |
+| [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk) | Hybrid APK with raw `m` value |
+| [`../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3g.apk`](../bin/v2.0.3/DetektorAir-Bluetooth-v2.0.3g.apk) | **Latest hybrid APK**: live scan data (no false demo mode) |
 
 ```cmd
 esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.0.3\DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin
@@ -63,13 +64,13 @@ PIN : 1234
 ```
 
 1. Pair **DetektorAir** (PIN 1234) in Android Bluetooth settings.
-2. Install `DetektorAir-Bluetooth-v2.0.3f.apk`.
+2. Install `DetektorAir-Bluetooth-v2.0.3g.apk`.
 3. Select **DetektorAir** and tap **HUBUNGKAN**.
 4. Press **Back** in the radar to disconnect.
 
 ### Android APK over WiFi
 
-`2.0.3f` is a hybrid app: it can also open the ESP32 web UI directly.
+`2.0.3g` is a hybrid app: it can also open the ESP32 web UI directly.
 
 1. Connect the phone to the `DetektorAir` hotspot (`radar12345`).
 2. Tap **BUKA WEB UI (WIFI)**.
@@ -140,12 +141,23 @@ The crash happened before the ST7735 was initialized, which left the panel
 white. This build keeps WiFi modem sleep enabled, so the display and both
 radios start normally.
 
+## Web UI / APK fix
+
+Telemetry packets (`{"a":...,"d":...,"mx":...,"pc":...}`) also contain the
+proximity counter `pc`. The web UI treated any packet with `pc` as a
+counter-only update and returned early, so the sweep, distance and detection
+never updated even though the WebSocket was connected.
+
+- The `pc` early-return now applies only to counter-only packets.
+- The APK's WebView no longer falls into demo mode (`file://`) — the injected
+  Bluetooth shim sets `window.__LACAK_LIVE = true`.
+
 ## Build result
 
 ```text
-Firmware: 1,907,429 bytes (97.0% of the OTA slot)
+Firmware: 1,907,733 bytes (97.0% of the OTA slot)
 RAM:         68,712 bytes (21.0%)
-APK:        329,567 bytes, version 2.0.3f
+APK:        329,691 bytes, version 2.0.3g
 ```
 
 > Flash usage is about **97.0%** of the 1.875 MB OTA slot. It fits, but there is
@@ -181,5 +193,5 @@ Commands: `C0`, `B1/B0`, `Y1/Y0`, `Zlo,lf,so,sf,hold`, `R<cm>`, `T<cm>`.
   This build keeps modem sleep on.
 - The APK is debug-signed; allow “install unknown apps”.
 - OTA remains available in the web UI.
-- The Android APK (`2.0.3f`) works both ways: Bluetooth mode shows the local
+- The Android APK (`2.0.3g`) works both ways: Bluetooth mode shows the local
   UI, WiFi mode opens the ESP32 web UI with CONFIG/OTA.

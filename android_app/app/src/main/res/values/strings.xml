@@ -16,7 +16,7 @@
     <string name="help_title">CARA MENGHUBUNGKAN</string>
     <string name="help_steps">Bluetooth:\n1. Pair “DetektorAir” (PIN 1234).\n2. Pilih DetektorAir, tekan HUBUNGKAN.\n\nWiFi:\n1. Sambungkan HP ke hotspot “DetektorAir” (password radar12345).\n2. Tekan BUKA WEB UI (WIFI).\n3. Web UI lengkap dengan CONFIG dan OTA.\n\nSaat radar tampil, tekan Back untuk memutus koneksi.</string>
     <string name="back_hint">Saat radar tampil, tekan tombol Back untuk memutus koneksi.</string>
-    <string name="version">APK 2.0.3f · HYBRID BT + WIFI</string>
+    <string name="version">APK 2.0.3g · HYBRID BT + WIFI</string>
     <string name="invalid_address">Pilih perangkat Bluetooth terlebih dahulu.</string>
     <string name="connection_failed">Tidak dapat terhubung ke perangkat Bluetooth.</string>
     <string name="connection_hint">Pastikan DetektorAir sudah dipair dan Bluetooth aktif.</string>

@@ -18,14 +18,15 @@ File: [`v2.0.3/`](v2.0.3/)
 | [`v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3c.apk) | APK with RFCOMM fallback + scrollable device dropdown |
 | [`v2.0.3/DetektorAir-Bluetooth-v2.0.3d.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3d.apk) | Adds Android 12+ BLUETOOTH_SCAN fix |
 | [`v2.0.3/DetektorAir-Bluetooth-v2.0.3e.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3e.apk) | Hybrid APK: Bluetooth + WiFi web UI |
-| [`v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk) | **Recommended hybrid APK**: like 2.0.3e, distance unit `m` keeps the raw value |
+| [`v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3f.apk) | Hybrid APK with raw `m` value |
+| [`v2.0.3/DetektorAir-Bluetooth-v2.0.3g.apk`](v2.0.3/DetektorAir-Bluetooth-v2.0.3g.apk) | **Recommended hybrid APK**: live scan data (demo fixed) |
 
 ```cmd
 esptool.py --chip esp32 --port COM5 write_flash 0x0 bin\v2.0.3\DetektorAir-v2.0.3-ST7735-WiFi-BT-factory.bin
 ```
 
 Hybrid: WiFi AP `DetektorAir` / `radar12345`, web UI at `http://192.168.4.1`,
-web OTA, **and** Bluetooth SPP `DetektorAir` / PIN `1234`. APK `2.0.3f` can
+web OTA, **and** Bluetooth SPP `DetektorAir` / PIN `1234`. APK `2.0.3g` can
 open either the Bluetooth UI or the WiFi web UI. Distances are shown with the
 unit `m` while the raw sensor value is kept unchanged.
 

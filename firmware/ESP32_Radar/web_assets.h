@@ -4,7 +4,7 @@
 #pragma once
 #include <pgmspace.h>
 
-static const unsigned int INDEX_HTML_LEN = 85140;
+static const unsigned int INDEX_HTML_LEN = 85433;
 static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
 <!DOCTYPE html>
 <html lang="id">
@@ -897,7 +897,9 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
   var $ = function(id){ return document.getElementById(id); };
   var params = new URLSearchParams(location.search);
   var isLocalHost = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
-  var DEMO = params.has("demo") || location.protocol === "file:" || isLocalHost;
+  var forceLive = !!window.__LACAK_LIVE;
+  var DEMO = !forceLive &&
+             (params.has("demo") || location.protocol === "file:" || isLocalHost);
   var BLIP_LIFE = 9000;
   var PI = Math.PI;
 
@@ -1555,13 +1557,18 @@ static const char INDEX_HTML[] PROGMEM = R"LACAKIDX(
       updateModeUI(); updateBuzzerUI(); updateProxUI();
       return;
     }
-    if (typeof m.pc === "number") {
-      S.prox = m.pc;
-      updateProxUI();
+    if (m.st){ updateStatus(m); return; }
+    if (typeof m.a !== "number") {
+      // Proximity-only packet from the inductive counter.
+      if (typeof m.pc === "number") {
+        S.prox = m.pc;
+        updateProxUI();
+      }
       return;
     }
-    if (m.st){ updateStatus(m); return; }
-    if (typeof m.a !== "number") return;
+    // Scan packets also carry "pc"; update the counter without dropping the
+    // angle/distance sample.
+    if (typeof m.pc === "number") S.prox = m.pc;
 
     var now = performance.now();
     var prev = S.targetAngle;
