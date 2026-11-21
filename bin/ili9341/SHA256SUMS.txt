@@ -1,0 +1,2 @@
+5a2010f930cb9e908830abfc0769533c03e1c1083f7ccd466f943f4d256793e5  DetektorAir-v2.0.3-ILI9341-WiFi-BT-factory.bin
+b5ea76ad44f4a8d78799a4c85e9ee195d974753cfec8aa2a1afa5b747cd72504  DetektorAir-v2.0.3-ILI9341-WiFi-BT-ota.bin

@@ -65,10 +65,12 @@
 #include "nextion_ui.h"
 
 #define ST7735_ENABLED 1
-#if defined(ST7735_ARTWORK_UI)
-#include "st7735_ui.h"          // JPEG artwork screen (alternate)
+#if defined(ILI9341_DRIVER)
+#include "ili9341_ui.h"         // 2.4" 240x320 ILI9341 mirror screen
+#elif defined(ST7735_ARTWORK_UI)
+#include "st7735_ui.h"          // 1.8" JPEG artwork screen (alternate)
 #else
-#include "st7735_ui_vector.h"   // v2.0.1-style drawn mirror of the web UI (default)
+#include "st7735_ui_vector.h"   // 1.8" v2.0.1-style mirror (default)
 #endif
 
 #include "proximity.h"
