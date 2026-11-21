@@ -91,11 +91,14 @@ distance, alert state and pass count.
 - The **welcome logo** is shown for **3 seconds** at boot, then the mirror screen
   starts.
 - Header **LACAK**; version on the right.
-- `JARAK` uses the raw sensor value with the unit **`m`** (`58`, not `0.58`).
+- `KEDALAMAN` uses the raw sensor value with the unit **`m`** (`58`, not `0.58`).
 - `AMAN` / `TERDETEKSI` follows the alert threshold.
 - `PASSES` is the inductive counter.
 - `MAX` is the configured range, also raw + `m`.
 - The sweep updates every 200 ms and uses the same virtual angle as the web UI.
+- **TAB:** the panel is initialised with `ST7735_REDTAB` (offset 0,0). The earlier
+  `GREENTAB` setting left 2 px of uninitialised RAM on the left and 1 px on top,
+  which appeared as a white/noisy strip and pushed the right-hand text out of view.
 
 ## Alternate display: JPEG artwork
 

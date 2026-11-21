@@ -17,7 +17,7 @@
 #define ST7735_DRIVER 1
 #define TFT_WIDTH  128
 #define TFT_HEIGHT 160
-#define ST7735_GREENTAB 1
+#define ST7735_REDTAB 1
 #define TFT_MISO 12
 #define TFT_MOSI 13
 #define TFT_SCLK 14
@@ -113,7 +113,7 @@ static void drawRadar() {
   tft.setTextColor(C_DIM, C_BG);
   tft.drawString("0", 2, 74);
   tft.drawString("90", 44, 21);
-  tft.drawString("180", 86, 74);
+  tft.drawString("180", 77, 74);
 
   for (int i = 3; i >= 1; i--) {
     int a = g_angle - g_dir * i * 6;
@@ -147,7 +147,9 @@ static void drawValues(bool force) {
     tft.fillRect(98, 66, 60, 10, C_BG);
     tft.setTextFont(1);
     tft.setTextColor(det ? C_AMBER : C_GREEN, C_BG);
-    tft.drawString(det ? "TERDETEKSI" : "AMAN", 99, 66);
+    tft.setTextDatum(TR_DATUM);
+    tft.drawString(det ? "TERDETEKSI" : "AMAN", 158, 66);
+    tft.setTextDatum(TL_DATUM);
 
     g_lastDist = g_dist;
     g_lastDetect = det;
@@ -179,13 +181,15 @@ static void drawStatic() {
   tft.drawString("LACAK", 4, 2);
   tft.setTextFont(1);
   tft.setTextColor(C_GREEN, C_PANEL);
-  tft.drawString("v2.0.3", 130, 6);
+  tft.setTextDatum(TR_DATUM);
+  tft.drawString("v2.0.3", 157, 6);
+  tft.setTextDatum(TL_DATUM);
 
   tft.drawFastVLine(96, 20, 106, C_EDGE);
 
   tft.setTextFont(1);
   tft.setTextColor(C_DIM, C_BG);
-  tft.drawString("JARAK", 99, 22);
+  tft.drawString("KEDALAMAN", 99, 22);
   tft.drawString("PASSES", 99, 78);
   tft.drawString(String("MAX ") + String(g_maxRange) + "m", 99, 114);
 

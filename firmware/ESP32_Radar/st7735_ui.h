@@ -16,7 +16,7 @@
 #define ST7735_DRIVER 1
 #define TFT_WIDTH  128
 #define TFT_HEIGHT 160
-#define ST7735_GREENTAB 1
+#define ST7735_REDTAB 1
 #define TFT_MISO 12
 #define TFT_MOSI 13
 #define TFT_SCLK 14
