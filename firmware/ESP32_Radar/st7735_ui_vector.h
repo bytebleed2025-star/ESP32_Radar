@@ -220,6 +220,26 @@ inline uint32_t frames() {
   return g_frames;
 }
 
+// Diagnostic: cycle full-screen colours. Used with -DTFT_SELFTEST=1.
+inline void selfTest() {
+  tft.init();
+  tft.setRotation(ST7735_ROTATION);
+
+  const uint16_t colors[5] = {TFT_RED, TFT_GREEN, TFT_BLUE, TFT_WHITE, TFT_BLACK};
+  for (;;) {
+    for (int i = 0; i < 5; i++) {
+      tft.fillScreen(colors[i]);
+      delay(700);
+    }
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.setTextDatum(MC_DATUM);
+    tft.setTextFont(4);
+    tft.drawString("TEST", ST7735_WIDTH / 2, ST7735_HEIGHT / 2);
+    delay(1500);
+  }
+}
+
 inline void setConfig(int maxRange, int alertCm) {
   g_maxRange = constrain(maxRange, 40, 400);
   g_alertCm = constrain(alertCm, 10, 150);

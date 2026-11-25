@@ -1011,6 +1011,10 @@ void setup() {
   Serial.println("==========================================");
   Serial.printf("Reset reason: %d\n", (int)esp_reset_reason());
 
+#if defined(TFT_SELFTEST)
+  St7735UI::selfTest();   // never returns
+#endif
+
   if (!SerialBT.begin(BT_NAME)) {
     Serial.println("Bluetooth init failed");
   } else {

@@ -2,3 +2,4 @@
 c4119a0bb08225b4527cee26e5b8446ef214f70e77d89733b9f520a46364dc4c  DetektorAir-v2.0.3-177-00-WiFi-BT-ota.bin
 48bf944ec91f61adebf2a6aab202ec975e792bda068d6e5fe32332421759297e  DetektorAir-v2.0.3-177-21-WiFi-BT-factory.bin
 25881d63bb82fe951f34c8db3f84e511e28fe58849ef1e0e859b67c3f03369a8  DetektorAir-v2.0.3-177-21-WiFi-BT-ota.bin
+253ee1c76bc8f853ca8f1ca349e5dec669978c5800068fcc7f38a4037aa9429e  DetektorAir-v2.0.3-177-TEST-factory.bin

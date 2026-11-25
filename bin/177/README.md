@@ -27,6 +27,18 @@ HC-SR04, buzzer and SN04 keep their pins (5, 18, 23, 34, 33).
 pio run -e esp32dev-177
 ```
 
+## Self-test binary
+
+[`DetektorAir-v2.0.3-177-TEST-factory.bin`](DetektorAir-v2.0.3-177-TEST-factory.bin)
+draws **red → green → blue → white → black** and the word `TEST`, forever.
+It uses the same pins and the same ST7735 init.
+
+| Result | Meaning |
+|---|---|
+| Colours cycle | Wiring + controller OK → the problem is TAB/rotation |
+| White/grey, no colours | Data lines not connected (check header order) or wrong controller (ST7789/ST7735B) |
+| Red appears as blue | RGB/BGR order — add `-DTFT_RGB_ORDER=TFT_RGB` |
+
 ## If the image does not fit
 
 These panels differ only in the controller RAM offset. Two builds are
