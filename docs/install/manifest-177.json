@@ -1,0 +1,27 @@
+﻿{
+    "name":  "LACAK Radar - ST7735 1.77\"",
+    "version":  "2.0.3",
+    "builds":  [
+                   {
+                       "chipFamily":  "ESP32",
+                       "parts":  [
+                                     {
+                                         "path":  "firmware/177/bootloader.bin",
+                                         "offset":  4096
+                                     },
+                                     {
+                                         "path":  "firmware/177/partitions.bin",
+                                         "offset":  32768
+                                     },
+                                     {
+                                         "path":  "firmware/177/boot_app0.bin",
+                                         "offset":  57344
+                                     },
+                                     {
+                                         "path":  "firmware/177/firmware.bin",
+                                         "offset":  65536
+                                     }
+                                 ]
+                   }
+               ]
+}

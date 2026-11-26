@@ -1,5 +1,0 @@
-f29c11355edb92d4e34c654560e075e80c220d447d40d249fb42aa71a07dfcb8  DetektorAir-v2.0.1-ST7735-HWSPI-hspi-1mhz-factory.bin
-b40181b59fd5d77eccf495761127950aec189a67a899555e382faf610d63d069  DetektorAir-v2.0.1-ST7735-HWSPI-vspi-1mhz-factory.bin
-0c15838b4bd8e28e4223bc8ee5aa924f99908c9fb873a6dcb33feccd9d84b471  DetektorAir-v2.0.1-ST7735-SWSPI-greentab-factory.bin
-ad402f392113a7d4fd848a3aaee3d90507dcdb58bb3d9688aa58069108ed4c40  DetektorAir-v2.0.1-ST7735-SWSPI-redtab-factory.bin
-ae786ec8caa1d5dcb8355400cdfe1aef19fd336a8491325957db06726d96973b  DetektorAir-v2.0.1-ST7735-test-factory.bin

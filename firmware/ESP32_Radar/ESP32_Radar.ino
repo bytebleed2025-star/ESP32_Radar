@@ -60,15 +60,22 @@
 
 #include "web_assets.h"
 
-// ST7735 branch: the serial Nextion display is disabled.
+// Display variant selectors. Override from platformio.ini with
+// -DNEXTION_ENABLED=1 / -DST7735_ENABLED=0 for the Nextion-only build.
+#ifndef NEXTION_ENABLED
 #define NEXTION_ENABLED 0
+#endif
 #include "nextion_ui.h"
 
+#ifndef ST7735_ENABLED
 #define ST7735_ENABLED 1
-#if defined(ST7735_ARTWORK_UI)
-#include "st7735_ui.h"          // JPEG artwork screen (alternate)
-#else
-#include "st7735_ui_vector.h"   // v2.0.1-style drawn mirror of the web UI (default)
+#endif
+#if ST7735_ENABLED
+  #if defined(ST7735_ARTWORK_UI)
+  #include "st7735_ui.h"          // JPEG artwork screen (alternate)
+  #else
+  #include "st7735_ui_vector.h"   // v2.0.1-style drawn mirror of the web UI (default)
+  #endif
 #endif
 
 #include "proximity.h"
@@ -381,8 +388,10 @@ static void sendConfig(uint8_t num) {
                        g_handMode,
                        g_handMode ? g_manualTarget : g_angle,
                        stepDeg, Buzzer::enabled());
+#if ST7735_ENABLED
   St7735UI::setConfig(maxRangeCm, g_alertCm);
   St7735UI::setProximity(Proximity::count());
+#endif
 }
 
 static void broadcastProx() {
@@ -391,7 +400,9 @@ static void broadcastProx() {
                    (unsigned long)Proximity::count());
   webSocket.broadcastTXT(buf, n);
   if (SerialBT.hasClient()) SerialBT.println(buf);
+#if ST7735_ENABLED
   St7735UI::setProximity(Proximity::count());
+#endif
 }
 
 static void sendStatus() {
@@ -978,7 +989,9 @@ static void measureAtCurrent() {
   g_lastMeasurement = distance;
 
   NextionUI::addReading(g_angle, distance);
+#if ST7735_ENABLED
   St7735UI::addReading(distance, g_angle);
+#endif
 
   char buf[96];
   int n = snprintf(buf, sizeof(buf), "{\"a\":%d,\"d\":%d,\"mx\":%d,\"pc\":%lu}",
@@ -1011,7 +1024,7 @@ void setup() {
   Serial.println("==========================================");
   Serial.printf("Reset reason: %d\n", (int)esp_reset_reason());
 
-#if defined(TFT_SELFTEST)
+#if ST7735_ENABLED && defined(TFT_SELFTEST)
   St7735UI::selfTest();   // never returns
 #endif
 
@@ -1087,9 +1100,11 @@ void setup() {
   NextionUI::begin();
   Proximity::begin();
   Buzzer::begin();
+#if ST7735_ENABLED
   St7735UI::setConfig(maxRangeCm, g_alertCm);
   St7735UI::setProximity(Proximity::count());
   St7735UI::begin();
+#endif
 
   Serial.println("------------------------------------------");
   Serial.println("AP+STA mode. HTTP :80, WebSocket :81");
@@ -1111,7 +1126,9 @@ void loop() {
   webSocket.loop();
   ArduinoOTA.handle();
   NextionUI::loop();
+#if ST7735_ENABLED
   St7735UI::loop();
+#endif
 
   if (SerialBT.hasClient()) {
     if (!g_btClientWas) {
@@ -1176,7 +1193,11 @@ void loop() {
                   SerialBT.hasClient() ? 1 : 0,
                   (unsigned long)ESP.getFreeHeap(),
                   (unsigned long)ESP.getMinFreeHeap(),
+#if ST7735_ENABLED
                   (unsigned long)St7735UI::frames());
+#else
+                  0UL);
+#endif
   }
 
   // Give the idle task a slot; the TFT redraw is long at 1 MHz SPI.

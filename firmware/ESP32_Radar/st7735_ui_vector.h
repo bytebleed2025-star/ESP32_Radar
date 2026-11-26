@@ -45,10 +45,23 @@
 #define ST7735_HEIGHT 128
 #define ST7735_ROTATION 1
 
-// Black border drawn on the outer pixels. Some 1.77" panels show 2 px of
-// uninitialised controller RAM on the edge; trimming hides it.
+// Black border drawn on the outer pixels. Some panels show a few pixels of
+// uninitialised controller RAM on specific edges; trimming hides it.
+// UI_EDGE_TRIM applies to every side unless a per-side value is given.
 #ifndef UI_EDGE_TRIM
 #define UI_EDGE_TRIM 0
+#endif
+#ifndef UI_EDGE_TRIM_LEFT
+#define UI_EDGE_TRIM_LEFT UI_EDGE_TRIM
+#endif
+#ifndef UI_EDGE_TRIM_TOP
+#define UI_EDGE_TRIM_TOP UI_EDGE_TRIM
+#endif
+#ifndef UI_EDGE_TRIM_RIGHT
+#define UI_EDGE_TRIM_RIGHT UI_EDGE_TRIM
+#endif
+#ifndef UI_EDGE_TRIM_BOTTOM
+#define UI_EDGE_TRIM_BOTTOM UI_EDGE_TRIM
 #endif
 
 namespace St7735UI {
@@ -180,12 +193,20 @@ static void drawValues(bool force) {
 }
 
 static void drawEdgeTrim() {
-#if UI_EDGE_TRIM > 0
   const uint16_t c = TFT_BLACK;
-  tft.fillRect(0, 0, ST7735_WIDTH, UI_EDGE_TRIM, c);
-  tft.fillRect(0, ST7735_HEIGHT - UI_EDGE_TRIM, ST7735_WIDTH, UI_EDGE_TRIM, c);
-  tft.fillRect(0, 0, UI_EDGE_TRIM, ST7735_HEIGHT, c);
-  tft.fillRect(ST7735_WIDTH - UI_EDGE_TRIM, 0, UI_EDGE_TRIM, ST7735_HEIGHT, c);
+#if UI_EDGE_TRIM_TOP > 0
+  tft.fillRect(0, 0, ST7735_WIDTH, UI_EDGE_TRIM_TOP, c);
+#endif
+#if UI_EDGE_TRIM_BOTTOM > 0
+  tft.fillRect(0, ST7735_HEIGHT - UI_EDGE_TRIM_BOTTOM, ST7735_WIDTH,
+               UI_EDGE_TRIM_BOTTOM, c);
+#endif
+#if UI_EDGE_TRIM_LEFT > 0
+  tft.fillRect(0, 0, UI_EDGE_TRIM_LEFT, ST7735_HEIGHT, c);
+#endif
+#if UI_EDGE_TRIM_RIGHT > 0
+  tft.fillRect(ST7735_WIDTH - UI_EDGE_TRIM_RIGHT, 0, UI_EDGE_TRIM_RIGHT,
+               ST7735_HEIGHT, c);
 #endif
 }
 

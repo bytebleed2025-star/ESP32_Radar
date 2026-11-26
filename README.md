@@ -46,6 +46,36 @@ backdrop and header logo (served as `web/logo.jpg`).
 - **Android WebView APK** (`DetektorAir-debug.apk`) for the same web UI, with a modern connection screen
 - Arduino IDE **and** PlatformIO project files included
 
+## Web installer (variants)
+
+Live installer:
+
+```
+https://bytebleed2025-star.github.io/ESP32-Radar-installer/
+```
+
+It offers three separate firmware buttons, because ESP Web Tools cannot show a
+build dropdown when the variants share the same ESP32 chip family:
+
+| Variant | Build env | Display |
+|---|---|---|
+| **ST7735 1.8"** | `esp32dev` | 128x160, 2 px left / 1 px top edge trim |
+| **ST7735 1.77"** | `esp32dev-177` | 128x160, 2 px edge trim |
+| **Nextion** | `esp32dev-nextion` | NX3224T028 on UART2, no ST7735 init |
+
+All three include the HC-SR04, SN04, servo and buzzer. The same page also offers
+the latest stable Android APK, `DetektorAir-v2.0.3g.apk`.
+
+Release all three variants and publish:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\release-installer.ps1 -Version 2.0.4
+```
+
+A full install erases NVS (saved Wi-Fi/calibration). Older pre-2.0.3 release
+folders and test binaries were removed; current artifacts live in `bin/v2.0.3/`
+and the installer.
+
 ## Project layout
 
 ```text

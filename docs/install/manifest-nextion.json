@@ -1,0 +1,27 @@
+﻿{
+    "name":  "LACAK Radar - Nextion",
+    "version":  "2.0.3",
+    "builds":  [
+                   {
+                       "chipFamily":  "ESP32",
+                       "parts":  [
+                                     {
+                                         "path":  "firmware/nextion/bootloader.bin",
+                                         "offset":  4096
+                                     },
+                                     {
+                                         "path":  "firmware/nextion/partitions.bin",
+                                         "offset":  32768
+                                     },
+                                     {
+                                         "path":  "firmware/nextion/boot_app0.bin",
+                                         "offset":  57344
+                                     },
+                                     {
+                                         "path":  "firmware/nextion/firmware.bin",
+                                         "offset":  65536
+                                     }
+                                 ]
+                   }
+               ]
+}
