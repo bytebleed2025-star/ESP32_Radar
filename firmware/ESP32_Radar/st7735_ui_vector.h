@@ -45,6 +45,12 @@
 #define ST7735_HEIGHT 128
 #define ST7735_ROTATION 1
 
+// Black border drawn on the outer pixels. Some 1.77" panels show 2 px of
+// uninitialised controller RAM on the edge; trimming hides it.
+#ifndef UI_EDGE_TRIM
+#define UI_EDGE_TRIM 0
+#endif
+
 namespace St7735UI {
 
 static TFT_eSPI tft;
@@ -78,6 +84,8 @@ static const uint16_t C_AMBER  = 0xFD20;
 static bool detected() {
   return g_dist > 0 && g_dist <= g_alertCm;
 }
+
+static void drawEdgeTrim();
 
 static uint32_t g_frames = 0;
 
@@ -130,6 +138,7 @@ static void drawRadar() {
   }
 
   tft.fillCircle(CX, CY, 2, C_TEXT);
+  drawEdgeTrim();
 }
 
 static void drawValues(bool force) {
@@ -170,9 +179,18 @@ static void drawValues(bool force) {
   }
 }
 
+static void drawEdgeTrim() {
+#if UI_EDGE_TRIM > 0
+  const uint16_t c = TFT_BLACK;
+  tft.fillRect(0, 0, ST7735_WIDTH, UI_EDGE_TRIM, c);
+  tft.fillRect(0, ST7735_HEIGHT - UI_EDGE_TRIM, ST7735_WIDTH, UI_EDGE_TRIM, c);
+  tft.fillRect(0, 0, UI_EDGE_TRIM, ST7735_HEIGHT, c);
+  tft.fillRect(ST7735_WIDTH - UI_EDGE_TRIM, 0, UI_EDGE_TRIM, ST7735_HEIGHT, c);
+#endif
+}
+
 static void drawStatic() {
   tft.fillScreen(C_BG);
-
   tft.fillRect(0, 0, ST7735_WIDTH, 20, C_PANEL);
   tft.drawFastHLine(0, 20, ST7735_WIDTH, C_EDGE);
   tft.setTextDatum(TL_DATUM);
@@ -195,6 +213,7 @@ static void drawStatic() {
 
   drawRadar();
   drawValues(true);
+  drawEdgeTrim();
 }
 
 inline void begin() {
@@ -207,6 +226,7 @@ inline void begin() {
   TJpgDec.setSwapBytes(true);
   TJpgDec.setCallback(tft_output);
   showJpg(ST7735_WELCOME_JPG, ST7735_WELCOME_JPG_LEN);
+  drawEdgeTrim();
   delay(3000);
   tft.fillScreen(C_BG);
 
