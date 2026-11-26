@@ -113,6 +113,9 @@ and the installer.
 
 ### Wiring
 
+> For the **ST7735 1.77"/1.8"** build on **ESP32 30-pin and 38-pin** boards,
+> see the dedicated guide: [`WIRING.md`](WIRING.md).
+
 ```text
 HC-SR04                                ESP32
   VCC ─────────────── 5V ───────────── 5V
