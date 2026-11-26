@@ -51,4 +51,7 @@ provided:
 
 Flash one, look at the edge, and keep the one with a clean border.
 
+Both builds also paint a **2 px black border** (`-DUI_EDGE_TRIM=2`) so the
+2 px / 1 px of uninitialised controller RAM cannot show on any edge.
+
 If the image is **rotated 90°**, tell me and I’ll switch the rotation.
