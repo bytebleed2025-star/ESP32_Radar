@@ -128,7 +128,17 @@ Optional counter reset:
 GPIO33 ── push button ── GND
 ```
 
-GPIO33 uses the internal pull-up.
+GPIO33 uses the internal pull-up (active LOW, ~40 ms debounce). A short press
+clears the PASSES counter, saves it to NVS, and updates the web UI, Bluetooth
+and TFT at once. The firmware prints `[BTN] counter reset (GPIO33)`.
+
+Free pins if GPIO33 is taken (38-pin): 0, 2, 4, 15, 16, 17, 19, 21, 22, 35,
+36, 39. On the 30-pin board: 2, 4, 15, 16, 17, 19, 21, 22, 35, 36, 39. Change
+the pin at build time with:
+
+```ini
+build_flags = -DPIN_PROX_RESET=13
+```
 
 ---
 

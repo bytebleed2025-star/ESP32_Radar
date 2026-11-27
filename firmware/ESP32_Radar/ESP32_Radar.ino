@@ -1156,6 +1156,7 @@ void loop() {
     broadcastProx();
   }
   if (Proximity::pollReset()) {
+    Serial.println("[BTN] counter reset (GPIO33)");
     broadcastProx();
   }
 
